@@ -1,0 +1,10 @@
+/* Phase 2d-2: fonts dialog */
+.field .check { color: var(--text); }
+.field .check input, .weight-grid input { padding: 0; }
+.field select { padding: 8px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+.weight-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px 10px; }
+.font-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.font-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px;
+  border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+.font-row small { color: var(--muted); font-size: 11px; }
+.font-sample { font-size: 18px; color: var(--text); }

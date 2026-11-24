@@ -3,6 +3,7 @@ import { BannerPreview } from '@/app/components/BannerPreview';
 import type { BannerElement } from '@/model/types';
 import type { TestClickMessage } from '@/renderer/preview';
 import { type UploadTarget, uploadImages, useAssetUrls } from './assets';
+import { useDocumentFonts } from './fonts/useDocumentFonts';
 import { EditorCanvas } from './canvas/EditorCanvas';
 import { type EditorMode, EditorHeader } from './EditorHeader';
 import { useAutosave } from './hooks/useAutosave';
@@ -39,6 +40,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const [notice, setNotice] = useState<string | null>(null);
   const onTestClick = useCallback((m: TestClickMessage) => setLastClick(m), []);
   const assetUrls = useAssetUrls(project);
+  useDocumentFonts(project, assetUrls);
 
   const onUpload = useCallback((files: File[], target?: UploadTarget) => {
     uploadImages(files, target).then(

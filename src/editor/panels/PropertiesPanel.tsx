@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import type { BannerElement, BoxStyle, GroupElement, ID, ImageElement, Size, TextStyle } from '@/model/types';
 import type { UploadTarget } from '../assets';
+import { FontsDialog } from '../fonts/FontsDialog';
+import { fontOptions } from '../fonts/fontOptions';
 import { normalizeAngle } from '../geometry';
 import { mutateSize } from '../mutate';
 import { findElement, setFrame } from '../ops';
@@ -8,8 +11,6 @@ import { ColorField, FileButton, NumberField, type Opt, PaintField, Section, Sel
 
 type OnUpload = (files: File[], target: UploadTarget) => void;
 
-// Web-safe fonts for now. Google Fonts and custom font upload are planned next.
-const FONTS = ['Arial', 'Helvetica', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Georgia', 'Times New Roman', 'Courier New', 'Impact'];
 const WEIGHTS: Opt<string> = [
   ['300', 'Light'], ['400', 'Regular'], ['500', 'Medium'], ['600', 'Semibold'], ['700', 'Bold'], ['800', 'Extra bold'], ['900', 'Black'],
 ];
@@ -133,11 +134,15 @@ function ElementProperties({ el, onUpload }: { el: BannerElement; onUpload: OnUp
 }
 
 function Typography({ id, t, isText }: { id: ID; t: TextStyle; isText: boolean }) {
-  const fonts: Opt<string> = (FONTS.includes(t.fontFamily) ? FONTS : [t.fontFamily, ...FONTS]).map((f) => [f, f] as const);
+  const projectFonts = useEditorStore((s) => s.project?.fonts);
+  const [fontsOpen, setFontsOpen] = useState(false);
+  const fonts: Opt<string> = fontOptions(projectFonts ?? [], t.fontFamily);
   const ts = t.textShadow;
   return (
     <Section title="Typography">
       <SelectField label="Font" value={t.fontFamily} options={fonts} onChange={(v) => editText(id, 'font', (x) => { x.fontFamily = v; })} />
+      <button type="button" className="secondary small-btn" onClick={() => setFontsOpen(true)}>Manage fonts…</button>
+      {fontsOpen && <FontsDialog onClose={() => setFontsOpen(false)} />}
       <div className="grid2">
         <NumberField label="Size" ariaLabel="Font size" min={1} value={t.fontSize}
           onChange={(v) => editText(id, 'fs', (x) => { x.fontSize = Math.max(1, v); })} />

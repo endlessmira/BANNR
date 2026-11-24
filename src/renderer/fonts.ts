@@ -1,3 +1,4 @@
+import { isSafeUnicodeRange } from '@/model/fonts';
 import type { BannerElement, ID, Project } from '@/model/types';
 import { cssUrl, rule, safeFontFamily } from './css';
 
@@ -14,7 +15,7 @@ const FONT_FORMAT: Record<string, string> = {
   'font/woff2': 'woff2', 'font/woff': 'woff', 'font/ttf': 'truetype', 'font/otf': 'opentype',
 };
 
-/** Writes @font-face rules for families this size uses. Unknown families fall back to system fonts. */
+/** Writes @font-face rules for embedded families this size uses. Other families fall back to system fonts. */
 export function fontFaceCss(project: Project, families: Set<string>, resolveAsset: (id: ID) => string): string {
   const rules: string[] = [];
   for (const font of project.fonts) {
@@ -30,6 +31,7 @@ export function fontFaceCss(project: Project, families: Set<string>, resolveAsse
           'font-weight': face.weight,
           'font-style': face.style,
           'font-display': 'block',
+          'unicode-range': face.unicodeRange && isSafeUnicodeRange(face.unicodeRange) ? face.unicodeRange : undefined,
         }),
       );
     }

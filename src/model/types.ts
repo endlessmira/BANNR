@@ -195,7 +195,13 @@ export interface AssetRef {
   originalBytes?: number; // size before compression
 }
 
-export interface FontFaceRef { weight: number; style: 'normal' | 'italic'; assetId: ID }
+export interface FontFaceRef {
+  weight: number;
+  style: 'normal' | 'italic';
+  assetId: ID;
+  /** Character range of this file, e.g. "U+0000-00FF" (Google Fonts subsets). */
+  unicodeRange?: string;
+}
 
 /**
  * Google Fonts are downloaded as woff2 when they're added, so exports

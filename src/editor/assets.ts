@@ -167,3 +167,9 @@ export async function uploadImages(files: Iterable<File>, target: UploadTarget =
   }
   return { added, notes, warnings };
 }
+
+/** Makes a freshly stored asset (e.g. a font file) available to the canvas and preview right away. */
+export async function registerAssetUrl(id: ID, blob: Blob): Promise<void> {
+  urlCache.set(id, await blobToDataUrl(blob));
+  notify();
+}
