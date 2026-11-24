@@ -6,7 +6,12 @@ export interface NewProjectInput { name: string; platform: PlatformId }
 
 const PLATFORM_IDS = Object.keys(PLATFORM_LABELS) as PlatformId[];
 
-export function NewProjectDialog({ onCreate }: { onCreate: (input: NewProjectInput) => void }) {
+interface Props {
+  onCreate: (input: NewProjectInput) => void;
+  onCancel?: () => void;
+}
+
+export function NewProjectDialog({ onCreate, onCancel }: Props) {
   const [name, setName] = useState('Untitled banner');
   const [platform, setPlatform] = useState<PlatformId | null>(null); // nothing preselected
   const canCreate = platform !== null && name.trim() !== '';
@@ -38,9 +43,12 @@ export function NewProjectDialog({ onCreate }: { onCreate: (input: NewProjectInp
           </div>
         </fieldset>
 
-        <button type="submit" className="primary" disabled={!canCreate}>
-          {platform ? 'Create project' : 'Choose a platform to continue'}
-        </button>
+        <div className="modal-actions">
+          {onCancel && <button type="button" className="secondary" onClick={onCancel}>Cancel</button>}
+          <button type="submit" className="primary" disabled={!canCreate}>
+            {platform ? 'Create project' : 'Choose a platform to continue'}
+          </button>
+        </div>
       </form>
     </div>
   );

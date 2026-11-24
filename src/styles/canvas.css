@@ -1,0 +1,51 @@
+/* Phase 2b: canvas interaction, zoom, toolbar. --inv = 1/zoom keeps UI strokes crisp at any zoom. */
+
+/* Stacking fix from 2a (kept here so it's never lost) */
+.canvas-render { z-index: 0; isolation: isolate; pointer-events: none; }
+.canvas-overlay { z-index: 1; touch-action: none; }
+.canvas-ui { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+
+/* Stage + zoom */
+.editor .stage { overflow: auto; align-items: flex-start; justify-content: flex-start; padding: 60px 24px 24px; user-select: none; }
+.zoom-box { position: relative; flex: none; margin: auto; }
+.zoom-inner { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+
+/* Hitboxes */
+.hitbox { cursor: move; outline-width: calc(1px * var(--inv)); }
+.hitbox[data-selected="true"] { outline-width: calc(2px * var(--inv)); }
+
+/* Transformer */
+.transformer { position: absolute; outline: calc(1.5px * var(--inv)) solid var(--amber); }
+.handle { position: absolute; box-sizing: border-box; pointer-events: auto;
+  width: calc(9px * var(--inv)); height: calc(9px * var(--inv));
+  margin: calc(-4.5px * var(--inv)) 0 0 calc(-4.5px * var(--inv));
+  background: #fff; border: calc(1.5px * var(--inv)) solid var(--amber); border-radius: calc(2px * var(--inv)); }
+.handle-nw { left: 0; top: 0; } .handle-n { left: 50%; top: 0; } .handle-ne { left: 100%; top: 0; }
+.handle-e { left: 100%; top: 50%; } .handle-se { left: 100%; top: 100%; } .handle-s { left: 50%; top: 100%; }
+.handle-sw { left: 0; top: 100%; } .handle-w { left: 0; top: 50%; }
+.rotate-handle { position: absolute; box-sizing: border-box; pointer-events: auto; cursor: grab;
+  left: 50%; top: calc(-26px * var(--inv)); width: calc(12px * var(--inv)); height: calc(12px * var(--inv));
+  margin-left: calc(-6px * var(--inv)); border-radius: 50%; background: var(--amber);
+  border: calc(2px * var(--inv)) solid #fff; }
+.rotate-handle::after { content: ''; position: absolute; left: 50%; top: 100%;
+  width: calc(1px * var(--inv)); height: calc(14px * var(--inv)); background: var(--amber); }
+
+/* Guides, marquee, multi-selection box */
+.guide { position: absolute; background: #ff3ea5; }
+.guide-x { top: 0; bottom: 0; width: calc(1px * var(--inv)); }
+.guide-y { left: 0; right: 0; height: calc(1px * var(--inv)); }
+.marquee { position: absolute; border: calc(1px * var(--inv)) dashed var(--amber); background: rgba(242,169,2,.08); }
+.multi-box { position: absolute; outline: calc(1px * var(--inv)) dashed var(--amber); }
+
+/* Toolbar */
+.toolbar { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 5;
+  display: flex; align-items: center; gap: 2px; padding: 5px 8px; white-space: nowrap;
+  border-radius: 10px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(0,0,0,.35); }
+.tb-label { margin: 0 4px; font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.tb-btn { min-width: 30px; height: 30px; padding: 0 7px; border-radius: 6px; border: 1px solid transparent;
+  background: transparent; color: var(--text); font-size: 14px; font-weight: 600; cursor: pointer; }
+.tb-btn:hover:not(:disabled) { border-color: var(--amber); }
+.tb-btn:disabled { opacity: .3; cursor: default; }
+.tb-sep { width: 1px; height: 20px; margin: 0 4px; background: var(--line); }
+.tb-select { height: 30px; padding: 0 6px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--text); font: inherit; font-size: 12px; }
