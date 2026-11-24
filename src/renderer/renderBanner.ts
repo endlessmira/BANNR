@@ -1,17 +1,22 @@
+import { getComponent } from '@/components/registry';
+import type { ComponentDefinition } from '@/components/types';
 import type { ID, Project, Size } from '@/model/types';
+import { MOUNT_JS, RUNTIME_CSS, RUNTIME_JS } from '@/runtime/runtime';
 import type { AnimationEngine } from './animation/engine';
 import { staticEngine } from './animation/static';
 import { BANNER_ROOT_ID, BORDER_Z, CLICK_LAYER_ID, CLICK_LAYER_Z, INTERACTIVE_CLASS } from './constants';
 import { cssUrl, paintCss, px, rule, safeColor } from './css';
 import { escapeHtml, jsString } from './escape';
 import { collectFontFamilies, fontFaceCss } from './fonts';
-import { type RenderContext, renderElements } from './renderElement';
+import { type ComponentMode, type RenderContext, renderElements } from './renderElement';
 
 export interface RenderOptions {
   /** Preview: data/absolute URLs. Export: relative paths such as "images/logo.png". */
   resolveAsset: (assetId: ID) => string;
   animationEngine?: AnimationEngine;
-  /** Platform adapter output (Phase 5) or the preview shim. bodyEnd defines bannr.exit() / bannr.track(). */
+  /** 'backup' renders each component's backupState (backup image). Default 'live'. */
+  componentMode?: ComponentMode;
+  /** Platform adapter output (export) or the preview shim. bodyEnd defines bannr.exit() / bannr.track(). */
   injection?: { head?: string; bodyEnd?: string };
   cssMode?: 'inline' | 'external';
   jsMode?: 'inline' | 'external';
@@ -26,6 +31,8 @@ export interface RenderFragment {
   /** Only assets this size actually uses. The export pipeline copies just these. */
   usedAssetIds: ID[];
   externalScripts: string[];
+  /** Component types used in this size (their code is included once each). */
+  componentTypes: string[];
 }
 
 export interface RenderedDocument extends RenderFragment {
@@ -45,8 +52,8 @@ const BASE_CSS = [
 
 /**
  * BANNR core: every click-through goes through bannr.exit(). The platform adapter (export) or the
- * preview defines exit/track; these no-op defaults keep a bare render safe. Phase 7a grows this into
- * the shared runtime (pointer utilities, tap-vs-drag, hints, visibility handling).
+ * preview defines exit/track; these no-op defaults keep a bare render safe. When a size uses
+ * components, the shared runtime (src/runtime) and only those components' code are added.
  */
 const CORE_JS = [
   'var bannr = window.bannr = window.bannr || {};',
@@ -62,11 +69,11 @@ export function getSize(project: Project, sizeId: ID): Size {
   return size;
 }
 
-/** Pure. Used by the editor canvas (Shadow DOM), the preview iframe and the exporter. */
+/** Pure. Used by the editor canvas (Shadow DOM), the preview iframe, the backup image and the exporter. */
 export function renderFragment(
   project: Project,
   sizeId: ID,
-  options: Pick<RenderOptions, 'resolveAsset' | 'animationEngine'>,
+  options: Pick<RenderOptions, 'resolveAsset' | 'animationEngine' | 'componentMode'>,
 ): RenderFragment {
   const size = getSize(project, sizeId);
   const engine = options.animationEngine ?? staticEngine;
@@ -76,7 +83,10 @@ export function renderFragment(
     return options.resolveAsset(id);
   };
   const elementCss: string[] = [];
-  const ctx: RenderContext = { size, animation: engine, css: elementCss, resolveAsset };
+  const components = new Set<string>();
+  const ctx: RenderContext = {
+    size, animation: engine, css: elementCss, components, componentMode: options.componentMode ?? 'live', resolveAsset,
+  };
 
   const fontCss = fontFaceCss(project, collectFontFamilies(size.elements), resolveAsset);
   const bg = size.background;
@@ -86,6 +96,7 @@ export function renderFragment(
   ].filter((v): v is string => Boolean(v));
 
   const elementsHtml = renderElements(size.elements, ctx);
+  const defs = [...components].sort().map((t) => getComponent(t)).filter((d): d is ComponentDefinition => d !== undefined);
   const hasBorder = size.border.enabled && size.border.width > 0;
 
   const css = [
@@ -112,6 +123,8 @@ export function renderFragment(
       position: 'absolute', inset: '0', cursor: 'pointer', background: 'transparent', 'z-index': CLICK_LAYER_Z,
     }),
     engine.globalCss(size, project),
+    defs.length > 0 ? RUNTIME_CSS : '',
+    ...defs.map((d) => d.styles ?? ''),
     ...elementCss,
   ]
     .filter(Boolean)
@@ -126,9 +139,18 @@ export function renderFragment(
     '</div>',
   ].join('');
 
-  const js = [CORE_JS, engine.runtime(size, project)].filter(Boolean).join('\n');
+  const js = [
+    CORE_JS,
+    engine.runtime(size, project),
+    ...(defs.length > 0 ? [RUNTIME_JS, ...defs.map((d) => d.runtime), MOUNT_JS] : []),
+  ]
+    .filter(Boolean)
+    .join('\n');
 
-  return { size, css, bodyHtml, js, usedAssetIds: [...used], externalScripts: [...engine.externalScripts] };
+  return {
+    size, css, bodyHtml, js, usedAssetIds: [...used], externalScripts: [...engine.externalScripts],
+    componentTypes: defs.map((d) => d.type),
+  };
 }
 
 /** Pure. Builds the full index.html (plus style.css/script.js in external mode). */

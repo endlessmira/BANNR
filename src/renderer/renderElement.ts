@@ -1,16 +1,24 @@
-import type { BannerElement, BoxStyle, ID, Size, TextStyle } from '@/model/types';
+import { getComponent } from '@/components/registry';
+import { resolveProps, resolveSlots } from '@/components/settings';
+import type { BannerElement, BoxStyle, ComponentElement, ID, Size, TextStyle } from '@/model/types';
 import type { AnimationEngine } from './animation/engine';
-import { MAX_ELEMENT_Z } from './constants';
+import { INTERACTIVE_CLASS, MAX_ELEMENT_Z } from './constants';
 import {
   type Decls, clamp, cssId, fontStack, paintCss, px, radiusCss, round, rule,
   safeColor, shadowCss, textShadowCss,
 } from './css';
 import { escapeHtml, escapeText } from './escape';
 
+/** live = editor canvas, preview and export; backup = the static backup image. */
+export type ComponentMode = 'live' | 'backup';
+
 export interface RenderContext {
   readonly size: Size;
   readonly animation: AnimationEngine;
   readonly css: string[]; // collected rules
+  /** Component types used in this size, so their code is included once. */
+  readonly components: Set<string>;
+  readonly componentMode: ComponentMode;
   resolveAsset(id: ID): string;
 }
 
@@ -70,6 +78,30 @@ function textDecls(t: TextStyle): Decls {
   };
 }
 
+function renderComponent(el: ComponentElement, ctx: RenderContext, id: string, frame: Decls, cls: string): string {
+  const def = getComponent(el.componentType);
+  if (!def) {
+    // Unknown type (e.g. made by a newer BANNR): a labelled placeholder. The checklist reports it.
+    ctx.css.push(rule(`#${id}`, {
+      ...frame, display: 'flex', 'align-items': 'center', 'justify-content': 'center', overflow: 'hidden',
+      border: '1px dashed rgba(127,127,127,0.8)', background: 'rgba(127,127,127,0.08)', color: '#888',
+      'font-family': 'Arial,Helvetica,sans-serif', 'font-size': '12px',
+    }));
+    return `<div id="${id}" class="${cls}" data-component="${escapeHtml(el.componentType)}"><span>${escapeText(el.componentType)}</span></div>`;
+  }
+  ctx.components.add(def.type);
+  const props = resolveProps(def, el.props, el.preset);
+  const slots = resolveSlots(def, el.slots, ctx.resolveAsset);
+  const rctx = { id, sel: `#${id}`, width: el.width, height: el.height };
+  const out = ctx.componentMode === 'backup' ? def.backupState(props, slots, rctx) : def.render(props, slots, rctx);
+  ctx.css.push(rule(`#${id}`, { ...frame, overflow: 'hidden' }));
+  if (out.css) ctx.css.push(out.css);
+  // Pointer-capturing components sit above the click layer and catch swipes/drags themselves.
+  const interactive = def.capturesPointer && ctx.componentMode === 'live' ? ` ${INTERACTIVE_CLASS}` : '';
+  return `<div id="${id}" class="${cls}${interactive}" data-component="${escapeHtml(def.type)}" ` +
+    `data-props="${escapeHtml(JSON.stringify(props))}">${out.html}</div>`;
+}
+
 export function renderElement(el: BannerElement, ctx: RenderContext): string {
   const id = cssId(el.id);
   const sel = `#${id}`;
@@ -116,13 +148,7 @@ export function renderElement(el: BannerElement, ctx: RenderContext): string {
       return `<div id="${id}" class="${cls}">${renderElements(el.children, ctx)}</div>`;
 
     case 'component':
-      // Placeholder until the component registry (Phase 7a) supplies render() and the runtime.
-      ctx.css.push(rule(sel, {
-        ...frame, display: 'flex', 'align-items': 'center', 'justify-content': 'center', overflow: 'hidden',
-        border: '1px dashed rgba(127,127,127,0.8)', background: 'rgba(127,127,127,0.08)', color: '#888',
-        'font-family': 'Arial,Helvetica,sans-serif', 'font-size': '12px',
-      }));
-      return `<div id="${id}" class="${cls}" data-component="${escapeHtml(el.componentType)}"><span>${escapeText(el.componentType)}</span></div>`;
+      return renderComponent(el, ctx, id, frame, cls);
 
     default: {
       const never: never = el;

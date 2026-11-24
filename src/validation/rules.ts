@@ -1,7 +1,8 @@
 import { DEFAULT_TARGET_KB } from '@/export/adapters/registry';
 import type { PlatformAdapter, ValidationLevel, ValidationResult, ZipManifest } from '@/export/adapters/types';
 import { animationEnd, totalSeconds } from '@/model/animation';
-import type { BannerElement, Project, Size } from '@/model/types';
+import type { Project, Size } from '@/model/types';
+import { componentChecks } from './components';
 import { jsString } from '@/renderer/escape';
 
 /**
@@ -57,9 +58,7 @@ const WINDOW_OPEN = /\bwindow\.open\s*\(/g;
 const LOCATION_WRITE = /\b(?:(?:window|top|parent|self|document)\.)?location(?:\.href)?\s*=(?!=)|\blocation\.(?:assign|replace)\s*\(/;
 const count = (s: string, re: RegExp): number => (s.match(re) ?? []).length;
 
-function hasComponent(els: readonly BannerElement[]): boolean {
-  return els.some((e) => e.type === 'component' || (e.type === 'group' && hasComponent(e.children)));
-}
+// Component checks live in ./components.ts
 
 export function runChecks(input: CheckInput): ValidationResult[] {
   const { project, size, adapter, manifest } = input;
@@ -165,8 +164,6 @@ export function runChecks(input: CheckInput): ValidationResult[] {
   // ── Notes ──
   const webp = input.convertedWebp ?? [];
   if (webp.length > 0) out.push(res('webp', 'pass', 'WebP images were converted to PNG', webp.join(', ')));
-  if (hasComponent(size.elements)) {
-    out.push(res('components', 'warning', 'Component layers are not interactive yet. They export as placeholder boxes.'));
-  }
+  out.push(...componentChecks(size));
   return out;
 }

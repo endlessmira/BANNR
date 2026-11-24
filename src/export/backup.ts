@@ -33,7 +33,7 @@ export async function renderBackupImage(
   const urls: Record<ID, string> = {};
   for (const id of Object.keys(project.assets)) urls[id] = await dataUrlFor(id, assetUrls[id]);
 
-  const frag = renderFragment(project, sizeId, { resolveAsset: (id) => urls[id] ?? '' });
+  const frag = renderFragment(project, sizeId, { resolveAsset: (id) => urls[id] ?? '', componentMode: 'backup' });
   const parsed = new DOMParser().parseFromString(`<!DOCTYPE html><html><head></head><body>${frag.bodyHtml}</body></html>`, 'text/html');
   const root = parsed.getElementById(BANNER_ROOT_ID);
   if (!root) throw new Error('Could not render the banner.');

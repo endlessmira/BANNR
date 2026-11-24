@@ -104,6 +104,6 @@ describe('pre-export checks', () => {
     const pc = project('cm360');
     pc.sizes[0]!.elements.push(createComponent({ componentType: 'cube' }));
     const b = await built(pc);
-    expect(ids(check(pc, b.size, b.manifest), 'warning')).toContain('components');
+    expect(ids(check(pc, b.size, b.manifest), 'error')).toContain('component-unknown');
   });
 });

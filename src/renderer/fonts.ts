@@ -6,6 +6,7 @@ export function collectFontFamilies(elements: readonly BannerElement[], out = ne
   for (const el of elements) {
     if (el.hidden) continue;
     if (el.type === 'text' || el.type === 'button') out.add(el.textStyle.fontFamily);
+    else if (el.type === 'component' && typeof el.props.fontFamily === 'string') out.add(el.props.fontFamily);
     else if (el.type === 'group') collectFontFamilies(el.children, out);
   }
   return out;
