@@ -1,5 +1,5 @@
 import { type DragEvent, type ReactNode, useCallback, useState } from 'react';
-import { BannerPreview, type PlayState } from '@/app/components/BannerPreview';
+import { BannerPreview, type PlayState, type SeekRequest } from '@/app/components/BannerPreview';
 import type { BannerElement } from '@/model/types';
 import type { TestClickMessage } from '@/renderer/preview';
 import { type UploadTarget, uploadImages, useAssetUrls } from './assets';
@@ -15,6 +15,8 @@ import { PropertiesPanel } from './panels/PropertiesPanel';
 import { SizesPanel } from './panels/SizesPanel';
 import { PreviewControls } from './PreviewControls';
 import { useEditorStore } from './store/editorStore';
+import { playhead } from './timeline/playhead';
+import { Timeline } from './timeline/Timeline';
 import { Toolbar, type ZoomMode } from './Toolbar';
 
 const FIT_MARGIN = 16;
@@ -41,6 +43,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [playState, setPlayState] = useState<PlayState>('playing');
   const [restartKey, setRestartKey] = useState(0);
+  const [seek, setSeek] = useState<SeekRequest | null>(null);
   const onTestClick = useCallback((m: TestClickMessage) => setLastClick(m), []);
   const assetUrls = useAssetUrls(project);
   useDocumentFonts(project, assetUrls);
@@ -54,7 +57,14 @@ export function EditorView({ onExit }: { onExit: () => void }) {
 
   const restart = useCallback(() => {
     setPlayState('playing');
+    setSeek(null);
+    playhead.set(0);
     setRestartKey((k) => k + 1);
+  }, []);
+
+  const onSeek = useCallback((ms: number) => {
+    setPlayState('paused');
+    setSeek((s) => ({ ms, n: (s?.n ?? 0) + 1 }));
   }, []);
 
   const changeMode = useCallback((m: EditorMode) => {
@@ -109,47 +119,51 @@ export function EditorView({ onExit }: { onExit: () => void }) {
           </details>
         </aside>
 
-        <section
-          ref={stageRef}
-          className="stage"
-          onPointerDown={(e) => { if (mode === 'edit' && e.target === e.currentTarget) select([]); }}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-        >
-          {mode === 'edit' ? (
-            <Toolbar zoomMode={zoomMode} zoom={zoom} onZoomChange={setZoomMode} selectionCount={editableCount} onUpload={onUpload} />
-          ) : (
-            <PreviewControls
-              size={size}
-              playState={playState}
-              onToggle={() => setPlayState((p) => (p === 'playing' ? 'paused' : 'playing'))}
-              onRestart={restart}
-            />
-          )}
-          <ZoomBox width={size.width} height={size.height} zoom={zoom}>
+        <div className="center-col">
+          <section
+            ref={stageRef}
+            className="stage"
+            onPointerDown={(e) => { if (mode === 'edit' && e.target === e.currentTarget) select([]); }}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+          >
             {mode === 'edit' ? (
-              <EditorCanvas project={project} sizeId={size.id} assetUrls={assetUrls} zoom={zoom} />
+              <Toolbar zoomMode={zoomMode} zoom={zoom} onZoomChange={setZoomMode} selectionCount={editableCount} onUpload={onUpload} />
             ) : (
-              <BannerPreview
-                project={project}
-                sizeId={size.id}
-                assetUrls={assetUrls}
-                onTestClick={onTestClick}
+              <PreviewControls
+                size={size}
                 playState={playState}
-                restartKey={restartKey}
+                onToggle={() => setPlayState((p) => (p === 'playing' ? 'paused' : 'playing'))}
+                onRestart={restart}
               />
             )}
-          </ZoomBox>
-          {mode === 'preview' && lastClick && (
-            <div className="toast">Test click → <code>{lastClick.url}</code> ({lastClick.target})</div>
-          )}
-          {notice && (
-            <div className="toast toast-warn" role="alert">
-              <span>{notice}</span>
-              <button className="toast-x" aria-label="Dismiss" onClick={() => setNotice(null)}>×</button>
-            </div>
-          )}
-        </section>
+            <ZoomBox width={size.width} height={size.height} zoom={zoom}>
+              {mode === 'edit' ? (
+                <EditorCanvas project={project} sizeId={size.id} assetUrls={assetUrls} zoom={zoom} />
+              ) : (
+                <BannerPreview
+                  project={project}
+                  sizeId={size.id}
+                  assetUrls={assetUrls}
+                  onTestClick={onTestClick}
+                  playState={playState}
+                  restartKey={restartKey}
+                  seek={seek}
+                />
+              )}
+            </ZoomBox>
+            {mode === 'preview' && lastClick && (
+              <div className="toast">Test click → <code>{lastClick.url}</code> ({lastClick.target})</div>
+            )}
+            {notice && (
+              <div className="toast toast-warn" role="alert">
+                <span>{notice}</span>
+                <button className="toast-x" aria-label="Dismiss" onClick={() => setNotice(null)}>×</button>
+              </div>
+            )}
+          </section>
+          <Timeline size={size} mode={mode} onSeek={onSeek} />
+        </div>
 
         <aside className="panel panel-right">
           <PropertiesPanel size={size} selected={selected} onUpload={onUpload} />

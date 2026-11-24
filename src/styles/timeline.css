@@ -1,0 +1,31 @@
+/* Phase 4b: timeline */
+.center-col { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.center-col > .stage { flex: 1; min-height: 0; }
+.timeline { flex: none; border-top: 1px solid var(--line); background: var(--panel); padding: 8px 12px 10px; font-size: 12px; user-select: none; }
+.tl-head { display: flex; align-items: baseline; gap: 12px; margin-bottom: 6px; }
+.tl-title { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.tl-total { color: var(--text); }
+.tl-total[data-over="true"] { color: #ff8a8d; }
+.tl-time { margin-left: auto; color: var(--muted); font-variant-numeric: tabular-nums; }
+.tl-empty { margin: 4px 0; }
+.tl-body { display: flex; max-height: 150px; overflow-y: auto; }
+.tl-names { flex: none; width: 150px; display: flex; flex-direction: column; }
+.tl-corner, .tl-ruler { flex: none; height: 20px; position: sticky; top: 0; z-index: 2; background: var(--panel); }
+.tl-name { all: unset; box-sizing: border-box; flex: none; height: 24px; padding: 0 8px; line-height: 24px;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; color: var(--text); }
+.tl-name[data-selected="true"] { color: var(--amber); }
+.tl-name[data-hidden="true"], .tl-track[data-hidden="true"] { opacity: .45; }
+.tl-right { position: relative; flex: 1; min-width: 0; }
+.tl-ruler { border-bottom: 1px solid var(--line); }
+.tl-ruler[data-scrub="true"] { cursor: ew-resize; }
+.tl-tick { position: absolute; top: 3px; transform: translateX(-50%); font-size: 10px; color: var(--muted); pointer-events: none; }
+.tl-tick:first-child { transform: none; }
+.tl-track { position: relative; height: 24px; border-bottom: 1px solid rgba(255,255,255,.04); overflow: hidden; }
+.tl-track[data-selected="true"] { background: rgba(242,169,2,.06); }
+.tl-bar { position: absolute; top: 4px; height: 16px; padding: 0 5px; border-radius: 4px; overflow: hidden; white-space: nowrap;
+  font-size: 10px; line-height: 16px; color: #111; cursor: ew-resize; }
+.tl-bar[data-phase="in"] { background: var(--amber); }
+.tl-bar[data-phase="out"] { background: #8ab4f8; }
+.tl-bar[data-over="true"] { background: #ff8a8d; }
+.tl-bar[data-static="true"] { cursor: pointer; }
+.tl-playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #ff3ea5; pointer-events: none; z-index: 3; }

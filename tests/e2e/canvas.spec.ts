@@ -16,11 +16,14 @@ test('every element can be selected by clicking it', async ({ page }) => {
 test('dragging moves an element and undo restores it', async ({ page }) => {
   await addAt(page, 'Add CTA button', 40, 370);
   const box = (await page.locator('.hitbox[data-name="CTA"]').boundingBox())!;
+  // The canvas may be zoomed to fit (the timeline makes the stage shorter),
+  // so drag 30 banner pixels rather than 30 screen pixels. The CTA is 140px wide.
+  const zoom = box.width / 140;
   const cx = box.x + box.width / 2;
   const cy = box.y + box.height / 2;
   await page.mouse.move(cx, cy);
   await page.mouse.down();
-  await page.mouse.move(cx + 30, cy, { steps: 6 });
+  await page.mouse.move(cx + 30 * zoom, cy, { steps: 6 });
   await page.mouse.up();
   await expect(field(page, 'X')).toHaveValue('70');
   await expect(field(page, 'Y')).toHaveValue('370');
