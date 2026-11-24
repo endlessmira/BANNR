@@ -3,6 +3,7 @@ import { DEMO_ASSET_URLS } from '@/app/assetUrls';
 import { createImage } from '@/model/factories';
 import type { AssetRef, ID, Project } from '@/model/types';
 import { assetStore } from '@/persistence';
+import { compressImage, resizeLimit } from './compress';
 import { mutateSize } from './mutate';
 import { findElement } from './ops';
 import { useEditorStore } from './store/editorStore';
@@ -13,7 +14,11 @@ export const ACCEPT_IMAGES = '.png,.jpg,.jpeg,.gif,.webp,.svg';
 export const LARGE_ASSET_KB = 150;
 
 export type UploadTarget = { kind: 'element' } | { kind: 'background' } | { kind: 'replace'; elementId: ID };
-export interface UploadResult { added: number; warnings: string[] }
+/** notes = information (e.g. compression results); warnings = something the user should act on. */
+export interface UploadResult { added: number; notes: string[]; warnings: string[] }
+
+const fmtSize = (bytes: number): string =>
+  bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
 
 // Data URLs (not blob URLs), so images also load inside the sandboxed preview iframe.
 const urlCache = new Map<ID, string>();
@@ -120,9 +125,11 @@ function insert(ref: AssetRef, target: UploadTarget, fileName: string): void {
   useEditorStore.getState().select([el.id]);
 }
 
-/** Stores images (deduplicated by content) and adds them to the active size. */
+/** Compresses, stores (deduplicated by content) and adds images to the active size. */
 export async function uploadImages(files: Iterable<File>, target: UploadTarget = { kind: 'element' }): Promise<UploadResult> {
+  const notes: string[] = [];
   const warnings: string[] = [];
+  const limit = resizeLimit(useEditorStore.getState().project?.sizes ?? []);
   let added = 0;
   for (const file of files) {
     const type = file.type || (file.name.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : '');
@@ -131,18 +138,32 @@ export async function uploadImages(files: Iterable<File>, target: UploadTarget =
       continue;
     }
     const dims = await imageSize(file);
-    const ref: AssetRef = { ...(await assetStore.put(file, file.name)), ...dims };
-    urlCache.set(ref.id, await blobToDataUrl(file));
+    const c = await compressImage(file, type, dims, limit);
+    const stored = await assetStore.put(c.blob, file.name);
+    const ref: AssetRef = {
+      ...stored,
+      width: c.width,
+      height: c.height,
+      ...(c.changed ? { originalBytes: file.size } : {}),
+    };
+    urlCache.set(ref.id, await blobToDataUrl(c.blob));
     notify();
+    if (c.changed) {
+      const resized = c.width !== dims.width || c.height !== dims.height;
+      notes.push(
+        `${file.name}: compressed ${fmtSize(file.size)} → ${fmtSize(ref.bytes)}` +
+          `${resized ? ` (${dims.width}×${dims.height} → ${c.width}×${c.height})` : ''}.`,
+      );
+    }
     if (ref.bytes > LARGE_ASSET_KB * 1024) {
       warnings.push(
-        `${file.name} is ${Math.round(ref.bytes / 1024)} KB. Many ad platforms limit a whole banner to around ` +
-          `${LARGE_ASSET_KB} KB, so consider a smaller or more compressed image.`,
+        `${file.name} is ${fmtSize(ref.bytes)}${c.changed ? ' even after compression' : ''}. Many ad platforms limit a whole ` +
+          `banner to around ${LARGE_ASSET_KB} KB, so consider a smaller or simpler image.`,
       );
     }
     insert(ref, target, file.name);
     added++;
     if (target.kind !== 'element') break; // replace/background take a single file
   }
-  return { added, warnings };
+  return { added, notes, warnings };
 }

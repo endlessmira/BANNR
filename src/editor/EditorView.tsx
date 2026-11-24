@@ -42,7 +42,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
 
   const onUpload = useCallback((files: File[], target?: UploadTarget) => {
     uploadImages(files, target).then(
-      (r) => { if (r.warnings.length > 0) setNotice(r.warnings.join(' ')); },
+      (r) => { const msgs = [...r.notes, ...r.warnings]; if (msgs.length > 0) setNotice(msgs.join(' ')); },
       (e: unknown) => setNotice(`Upload failed: ${e instanceof Error ? e.message : String(e)}`),
     );
   }, []);
