@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { addElement, align, distribute } from './actions';
+import { ACCEPT_IMAGES } from './assets';
 import type { AlignMode } from './geometry';
 
 export type ZoomMode = 'fit' | number;
@@ -13,9 +15,11 @@ interface Props {
   zoom: number;
   onZoomChange: (mode: ZoomMode) => void;
   selectionCount: number;
+  onUpload: (files: File[]) => void;
 }
 
-export function Toolbar({ zoomMode, zoom, onZoomChange, selectionCount }: Props) {
+export function Toolbar({ zoomMode, zoom, onZoomChange, selectionCount, onUpload }: Props) {
+  const fileRef = useRef<HTMLInputElement>(null);
   const target = selectionCount === 1 ? ' to banner' : ' to selection';
   return (
     <div className="toolbar">
@@ -24,6 +28,21 @@ export function Toolbar({ zoomMode, zoom, onZoomChange, selectionCount }: Props)
       <button className="tb-btn" title="Add rectangle" onClick={() => addElement('rect')}>▭</button>
       <button className="tb-btn" title="Add ellipse" onClick={() => addElement('ellipse')}>◯</button>
       <button className="tb-btn" title="Add CTA button" onClick={() => addElement('button')}>CTA</button>
+      <button className="tb-btn" title="Add image (PNG, JPG, GIF, WebP, SVG). You can also drop files on the canvas." onClick={() => fileRef.current?.click()}>
+        Img
+      </button>
+      <input
+        ref={fileRef}
+        type="file"
+        accept={ACCEPT_IMAGES}
+        multiple
+        hidden
+        onChange={(e) => {
+          const files = [...(e.target.files ?? [])];
+          e.target.value = '';
+          if (files.length > 0) onUpload(files);
+        }}
+      />
       <span className="tb-sep" />
       {ALIGN_BUTTONS.map(([mode, icon, label]) => (
         <button key={mode} className="tb-btn" title={label + target} disabled={selectionCount === 0} onClick={() => align(mode)}>

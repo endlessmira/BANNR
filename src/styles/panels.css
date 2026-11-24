@@ -1,0 +1,64 @@
+/* Phase 2c: layers + properties panels */
+.editor .workspace { grid-template-columns: 240px 1fr 300px; }
+.editor .panel { display: flex; flex-direction: column; }
+.check { display: flex; gap: 8px; align-items: center; font-size: 13px; cursor: pointer; }
+.notice { margin: 8px 0; padding: 8px 10px; border-radius: 6px; border: 1px solid var(--amber); font-size: 12px; color: var(--amber-soft); }
+
+/* Layers */
+.layers { margin-top: 20px; }
+.layers-head { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+.panel .layers-head h2 { margin: 0; }
+.layers-actions { display: flex; gap: 3px; }
+.mini { height: 24px; padding: 0 6px; border-radius: 5px; border: 1px solid var(--line); background: transparent;
+  color: var(--text); font-size: 11px; cursor: pointer; }
+.mini:hover:not(:disabled) { border-color: var(--amber); }
+.mini:disabled { opacity: .3; cursor: default; }
+.layer-list, .layer-children { list-style: none; margin: 8px 0 0; padding: 0; }
+.layer-children { margin: 0 0 0 18px; }
+.layer { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 6px; border-radius: 6px;
+  border: 1px solid transparent; font-size: 13px; cursor: pointer; user-select: none; }
+.layer:hover { background: var(--bg); }
+.layer[data-selected="true"] { border-color: var(--amber); background: rgba(242,169,2,.08); }
+.layer[data-hidden="true"] .layer-name { opacity: .45; }
+.layer[data-drop="before"] { box-shadow: inset 0 2px 0 var(--amber); }
+.layer[data-drop="after"] { box-shadow: inset 0 -2px 0 var(--amber); }
+.layer.child { height: 26px; font-size: 12px; color: var(--muted); cursor: default; }
+.layer.child:hover { background: transparent; }
+.layer-icon { width: 16px; text-align: center; font-size: 12px; color: var(--muted); }
+.layer-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.layer-input { flex: 1; min-width: 0; padding: 3px 6px; border-radius: 4px; border: 1px solid var(--amber);
+  background: var(--bg); color: var(--text); font: inherit; font-size: 12px; }
+.layer-toggle { width: 22px; height: 22px; padding: 0; border: 0; border-radius: 4px; background: transparent;
+  color: var(--muted); font-size: 11px; cursor: pointer; opacity: .55; }
+.layer:hover .layer-toggle, .layer-toggle[data-on="true"] { opacity: 1; }
+.layer-toggle:hover { background: var(--panel); color: var(--text); }
+.shortcuts { margin-top: auto; padding-top: 16px; font-size: 12px; color: var(--muted); }
+.shortcuts summary { cursor: pointer; }
+.shortcuts .hint { margin-top: 8px; line-height: 1.9; }
+
+/* Properties */
+.panel .props-title { margin: 0; font-size: 15px; text-transform: none; letter-spacing: 0; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.props > .muted { margin: 4px 0 8px; }
+.props-body { border: 0; margin: 0; padding: 0; min-width: 0; }
+.props-body:disabled { opacity: .5; }
+.psec { display: flex; flex-direction: column; gap: 8px; padding: 12px 0; border-top: 1px solid var(--line); }
+.psec h3 { margin: 0; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.paint { display: flex; flex-direction: column; gap: 8px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.nf, .sf, .cf { display: flex; align-items: center; gap: 6px; min-width: 0; font-size: 12px; color: var(--muted); }
+.nf > span, .sf > span, .cf > span { flex: none; min-width: 34px; }
+.nf input, .sf select, .cf input[type="text"], .ti, .ta { flex: 1; min-width: 0; padding: 5px 7px; border-radius: 5px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; font-size: 12px; }
+.nf input:focus, .sf select:focus, .cf input:focus, .ti:focus, .ta:focus { outline: none; border-color: var(--amber); }
+.nf em { font-style: normal; font-size: 11px; }
+.cf input[type="color"] { flex: none; width: 28px; height: 26px; padding: 0; border: 1px solid var(--line);
+  border-radius: 5px; background: none; cursor: pointer; }
+.ta { resize: vertical; }
+.small-btn { align-self: flex-start; padding: 6px 10px; font-size: 12px; }
+.asset-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; }
+.asset-row span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Upload warnings */
+.toast-warn { display: flex; align-items: flex-start; gap: 8px; max-width: 70%; line-height: 1.4; border-color: #e5a50a; }
+.toast-x { border: 0; background: transparent; color: var(--muted); font-size: 18px; line-height: 1; cursor: pointer; }

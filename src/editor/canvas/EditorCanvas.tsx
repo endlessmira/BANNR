@@ -8,6 +8,7 @@ import {
   resizeFrame, rotationFromPointer, snapMove, snapTargetsFor, unionRect,
 } from '../geometry';
 import { type SizeMutator, mutateSize, previewSize } from '../mutate';
+import { setFrame } from '../ops';
 import { useEditorStore } from '../store/editorStore';
 
 const SNAP_SCREEN_PX = 6;
@@ -145,7 +146,7 @@ export function EditorCanvas({ project, sizeId, assetUrls, zoom }: Props) {
       const r = { x: Math.round(f.x), y: Math.round(f.y), width: Math.round(f.width), height: Math.round(f.height) };
       last = (s) => {
         const t = s.elements.find((x) => x.id === el.id);
-        if (t) Object.assign(t, r);
+        if (t) setFrame(t, r);
       };
       show(last);
     }, () => {

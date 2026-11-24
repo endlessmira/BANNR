@@ -1,14 +1,16 @@
-import { type ReactNode, useCallback, useState } from 'react';
-import { DEMO_ASSET_URLS } from '@/app/assetUrls';
+import { type DragEvent, type ReactNode, useCallback, useState } from 'react';
 import { BannerPreview } from '@/app/components/BannerPreview';
 import type { BannerElement } from '@/model/types';
 import type { TestClickMessage } from '@/renderer/preview';
+import { type UploadTarget, uploadImages, useAssetUrls } from './assets';
 import { EditorCanvas } from './canvas/EditorCanvas';
 import { type EditorMode, EditorHeader } from './EditorHeader';
 import { useAutosave } from './hooks/useAutosave';
 import { useEditorShortcuts } from './hooks/useEditorShortcuts';
 import { useElementSize } from './hooks/useElementSize';
 import { findElement, findSize } from './ops';
+import { LayersPanel } from './panels/LayersPanel';
+import { PropertiesPanel } from './panels/PropertiesPanel';
 import { useEditorStore } from './store/editorStore';
 import { Toolbar, type ZoomMode } from './Toolbar';
 
@@ -34,7 +36,16 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const [zoomMode, setZoomMode] = useState<ZoomMode>('fit');
   const [stageRef, stage] = useElementSize<HTMLElement>();
   const [lastClick, setLastClick] = useState<TestClickMessage | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const onTestClick = useCallback((m: TestClickMessage) => setLastClick(m), []);
+  const assetUrls = useAssetUrls(project);
+
+  const onUpload = useCallback((files: File[], target?: UploadTarget) => {
+    uploadImages(files, target).then(
+      (r) => { if (r.warnings.length > 0) setNotice(r.warnings.join(' ')); },
+      (e: unknown) => setNotice(`Upload failed: ${e instanceof Error ? e.message : String(e)}`),
+    );
+  }, []);
 
   const size = project ? findSize(project, activeSizeId) : undefined;
   if (!project || !size) return null;
@@ -49,6 +60,15 @@ export function EditorView({ onExit }: { onExit: () => void }) {
     .filter((el): el is BannerElement => el !== undefined);
   const editableCount = selected.filter((el) => !el.locked).length;
 
+  const onDragOver = (e: DragEvent<HTMLElement>) => {
+    if (mode === 'edit' && e.dataTransfer.types.includes('Files')) e.preventDefault();
+  };
+  const onDrop = (e: DragEvent<HTMLElement>) => {
+    if (mode !== 'edit' || e.dataTransfer.files.length === 0) return;
+    e.preventDefault();
+    onUpload([...e.dataTransfer.files]);
+  };
+
   return (
     <div className="editor">
       <EditorHeader project={project} saveStatus={saveStatus} mode={mode} onModeChange={setMode} onExit={onExit} />
@@ -61,56 +81,52 @@ export function EditorView({ onExit }: { onExit: () => void }) {
               {s.id === project.masterSizeId && <span className="tag">master</span>}
             </button>
           ))}
-          <div className="hint">
-            <div><kbd>Drag</kbd> move · <kbd>Shift</kbd> constrain</div>
-            <div><kbd>Alt</kbd>+drag no snapping</div>
-            <div><kbd>Shift</kbd>+resize keep ratio</div>
-            <div><kbd>Shift</kbd>+rotate 15° steps</div>
-            <div><kbd>Drag</kbd> on empty area: box select</div>
-            <div><kbd>←↑→↓</kbd> nudge · <kbd>Shift</kbd> 10px</div>
-            <div><kbd>Ctrl/Cmd</kbd>+<kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd> <kbd>D</kbd> <kbd>A</kbd></div>
-            <div><kbd>Ctrl/Cmd</kbd>+<kbd>Z</kbd> undo · +<kbd>Shift</kbd> redo</div>
-            <div><kbd>Del</kbd> delete · <kbd>Esc</kbd> deselect / cancel</div>
-          </div>
+          <LayersPanel size={size} />
+          <details className="shortcuts">
+            <summary>Keyboard shortcuts</summary>
+            <div className="hint">
+              <div><kbd>Drag</kbd> move · <kbd>Shift</kbd> constrain · <kbd>Alt</kbd> no snap</div>
+              <div><kbd>Shift</kbd>+resize keep ratio · +rotate 15°</div>
+              <div><kbd>←↑→↓</kbd> nudge · <kbd>Shift</kbd> 10px</div>
+              <div><kbd>Ctrl/Cmd</kbd>+<kbd>C</kbd> <kbd>X</kbd> <kbd>V</kbd> <kbd>D</kbd> <kbd>A</kbd></div>
+              <div><kbd>Ctrl/Cmd</kbd>+<kbd>G</kbd> group · +<kbd>Shift</kbd> ungroup</div>
+              <div><kbd>Ctrl/Cmd</kbd>+<kbd>]</kbd> <kbd>[</kbd> forward / backward</div>
+              <div><kbd>Ctrl/Cmd</kbd>+<kbd>Z</kbd> undo · +<kbd>Shift</kbd> redo</div>
+              <div><kbd>Del</kbd> delete · <kbd>Esc</kbd> deselect</div>
+            </div>
+          </details>
         </aside>
 
         <section
           ref={stageRef}
           className="stage"
           onPointerDown={(e) => { if (mode === 'edit' && e.target === e.currentTarget) select([]); }}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
         >
           {mode === 'edit' && (
-            <Toolbar zoomMode={zoomMode} zoom={zoom} onZoomChange={setZoomMode} selectionCount={editableCount} />
+            <Toolbar zoomMode={zoomMode} zoom={zoom} onZoomChange={setZoomMode} selectionCount={editableCount} onUpload={onUpload} />
           )}
           <ZoomBox width={size.width} height={size.height} zoom={zoom}>
             {mode === 'edit' ? (
-              <EditorCanvas project={project} sizeId={size.id} assetUrls={DEMO_ASSET_URLS} zoom={zoom} />
+              <EditorCanvas project={project} sizeId={size.id} assetUrls={assetUrls} zoom={zoom} />
             ) : (
-              <BannerPreview project={project} sizeId={size.id} assetUrls={DEMO_ASSET_URLS} onTestClick={onTestClick} />
+              <BannerPreview project={project} sizeId={size.id} assetUrls={assetUrls} onTestClick={onTestClick} />
             )}
           </ZoomBox>
           {mode === 'preview' && lastClick && (
             <div className="toast">Test click → <code>{lastClick.url}</code> ({lastClick.target})</div>
           )}
+          {notice && (
+            <div className="toast toast-warn" role="alert">
+              <span>{notice}</span>
+              <button className="toast-x" aria-label="Dismiss" onClick={() => setNotice(null)}>×</button>
+            </div>
+          )}
         </section>
 
         <aside className="panel panel-right">
-          <h2>Selection</h2>
-          {selected.length === 0 ? (
-            <p className="muted">Click an element, or drag on an empty area to box-select.</p>
-          ) : (
-            selected.map((el) => (
-              <dl key={el.id} className="readout">
-                <dt>{el.name}</dt>
-                <dd>
-                  {el.type} · x {Math.round(el.x)}, y {Math.round(el.y)} · {Math.round(el.width)}×{Math.round(el.height)}
-                  {el.rotation ? ` · ${el.rotation}°` : ''}
-                  {el.locked ? ' · locked' : ''}
-                </dd>
-              </dl>
-            ))
-          )}
-          <p className="muted small">Layers and properties panels arrive in Phase 2c.</p>
+          <PropertiesPanel size={size} selected={selected} onUpload={onUpload} />
         </aside>
       </main>
     </div>

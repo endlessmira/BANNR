@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { copySelection, cutSelection, duplicateSelection, nudge, paste, selectAll } from '../actions';
+import { arrange, groupSelection, ungroupSelection } from '../layers';
 import { useEditorStore } from '../store/editorStore';
 
 const isTyping = (t: EventTarget | null): boolean =>
@@ -27,6 +28,9 @@ export function useEditorShortcuts(enabled = true): void {
         else if (key === 'v') run(paste);
         else if (key === 'd') run(duplicateSelection);
         else if (key === 'a') run(selectAll);
+        else if (key === 'g') run(() => (e.shiftKey ? ungroupSelection() : groupSelection()));
+        else if (key === ']' || key === '}') run(() => arrange(e.shiftKey ? 'front' : 'forward'));
+        else if (key === '[' || key === '{') run(() => arrange(e.shiftKey ? 'back' : 'backward'));
         return;
       }
 
