@@ -11,6 +11,7 @@ import { useElementSize } from './hooks/useElementSize';
 import { findElement, findSize } from './ops';
 import { LayersPanel } from './panels/LayersPanel';
 import { PropertiesPanel } from './panels/PropertiesPanel';
+import { SizesPanel } from './panels/SizesPanel';
 import { useEditorStore } from './store/editorStore';
 import { Toolbar, type ZoomMode } from './Toolbar';
 
@@ -28,7 +29,6 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const project = useEditorStore((s) => s.project);
   const activeSizeId = useEditorStore((s) => s.activeSizeId);
   const selection = useEditorStore((s) => s.selection);
-  const setActiveSize = useEditorStore((s) => s.setActiveSize);
   const select = useEditorStore((s) => s.select);
   const saveStatus = useAutosave();
   const [mode, setMode] = useState<EditorMode>('edit');
@@ -74,13 +74,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
       <EditorHeader project={project} saveStatus={saveStatus} mode={mode} onModeChange={setMode} onExit={onExit} />
       <main className="workspace">
         <aside className="panel">
-          <h2>Sizes</h2>
-          {project.sizes.map((s) => (
-            <button key={s.id} className="size-btn" aria-pressed={s.id === size.id} onClick={() => setActiveSize(s.id)}>
-              {s.width}×{s.height}
-              {s.id === project.masterSizeId && <span className="tag">master</span>}
-            </button>
-          ))}
+          <SizesPanel project={project} activeSizeId={size.id} />
           <LayersPanel size={size} />
           <details className="shortcuts">
             <summary>Keyboard shortcuts</summary>
