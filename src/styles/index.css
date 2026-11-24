@@ -1,0 +1,49 @@
+:root {
+  --amber: #f2a902; --amber-soft: #f7cd6c;
+  --bg: #111113; --panel: #1b1b1f; --line: #2c2c32; --text: #ececf1; --muted: #9a9aa5;
+  font-family: Inter, system-ui, -apple-system, sans-serif; color: var(--text); background: var(--bg);
+}
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 1280px; }
+
+/* Header */
+.app-header { display: flex; align-items: center; gap: 16px; height: 56px; padding: 0 20px;
+  background: var(--panel); border-bottom: 1px solid var(--line); }
+.app-logo { height: 22px; }
+.app-project { color: var(--muted); font-size: 14px; }
+.platform-badge { margin-left: auto; padding: 4px 12px; border-radius: 999px; background: var(--amber);
+  color: #111; font-weight: 700; font-size: 11px; line-height: 1.6; letter-spacing: .06em; text-transform: uppercase; }
+
+/* Workspace */
+.workspace { display: grid; grid-template-columns: 200px 1fr 460px; height: calc(100vh - 56px); }
+.panel { background: var(--panel); border-right: 1px solid var(--line); padding: 16px; overflow: auto; }
+.panel-right { border-right: 0; border-left: 1px solid var(--line); }
+.panel h2 { margin: 0 0 12px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.size-btn { display: block; width: 100%; margin-bottom: 6px; padding: 8px 10px; text-align: left; cursor: pointer;
+  background: transparent; color: var(--text); border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.size-btn[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); }
+.stage { position: relative; display: flex; align-items: center; justify-content: center;
+  background: repeating-conic-gradient(#18181b 0 25%, #1f1f23 0 50%) 0 0 / 24px 24px; }
+.preview-frame { display: block; border: 0; box-shadow: 0 10px 40px rgba(0,0,0,.5); }
+.toast { position: absolute; bottom: 24px; padding: 10px 14px; border-radius: 8px; font-size: 13px;
+  background: #000; border: 1px solid var(--amber); }
+.toast code { color: var(--amber-soft); }
+.code { margin: 0; font: 11px/1.5 ui-monospace, SFMono-Regular, monospace; color: #cfcfd6;
+  white-space: pre-wrap; word-break: break-all; }
+
+/* New-project dialog */
+.modal-backdrop { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.7); }
+.modal { width: 480px; padding: 28px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 18px; }
+.modal h1 { margin: 0; font-size: 20px; }
+.field { display: flex; flex-direction: column; gap: 6px; border: 0; padding: 0; margin: 0; font-size: 13px; color: var(--muted); }
+.field legend { margin-bottom: 6px; }
+.field em { color: var(--amber); font-style: normal; }
+.field input { padding: 9px 10px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); font: inherit; }
+.platform-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.platform-option { display: flex; align-items: center; gap: 8px; padding: 12px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line); color: var(--text); font-size: 14px; }
+.platform-option[data-selected="true"] { border-color: var(--amber); background: rgba(242,169,2,.08); }
+.primary { padding: 11px; border: 0; border-radius: 8px; background: var(--amber); color: #111;
+  font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer; }
+.primary:disabled { opacity: .4; cursor: not-allowed; }
