@@ -3,6 +3,8 @@ import { BannerPreview, type PlayState, type SeekRequest } from '@/app/component
 import type { BannerElement } from '@/model/types';
 import type { TestClickMessage } from '@/renderer/preview';
 import { type UploadTarget, uploadImages, useAssetUrls } from './assets';
+import { ExportDialog } from '@/export/ExportDialog';
+import { KbCounter } from '@/export/KbCounter';
 import { EditorCanvas } from './canvas/EditorCanvas';
 import { type EditorMode, EditorHeader } from './EditorHeader';
 import { useDocumentFonts } from './fonts/useDocumentFonts';
@@ -44,6 +46,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const [playState, setPlayState] = useState<PlayState>('playing');
   const [restartKey, setRestartKey] = useState(0);
   const [seek, setSeek] = useState<SeekRequest | null>(null);
+  const [exporting, setExporting] = useState(false);
   const onTestClick = useCallback((m: TestClickMessage) => setLastClick(m), []);
   const assetUrls = useAssetUrls(project);
   useDocumentFonts(project, assetUrls);
@@ -99,7 +102,8 @@ export function EditorView({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="editor">
-      <EditorHeader project={project} saveStatus={saveStatus} mode={mode} onModeChange={changeMode} onExit={onExit} />
+      <EditorHeader project={project} saveStatus={saveStatus} mode={mode} onModeChange={changeMode} onExit={onExit} onExport={() => setExporting(true)} />
+      {exporting && <ExportDialog project={project} assetUrls={assetUrls} onClose={() => setExporting(false)} />}
       <main className="workspace">
         <aside className="panel">
           <SizesPanel project={project} activeSizeId={size.id} />
@@ -152,6 +156,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
                 />
               )}
             </ZoomBox>
+            <KbCounter project={project} sizeId={size.id} />
             {mode === 'preview' && lastClick && (
               <div className="toast">Test click → <code>{lastClick.url}</code> ({lastClick.target})</div>
             )}

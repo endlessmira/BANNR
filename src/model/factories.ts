@@ -10,7 +10,7 @@ import {
 export type Clock = () => ISODateString;
 export const systemClock: Clock = () => new Date().toISOString();
 
-export const DEFAULT_SETTINGS: ProjectSettings = { maxAnimationSeconds: 30, maxLoops: 3 };
+export const DEFAULT_SETTINGS: ProjectSettings = { maxAnimationSeconds: 30, maxLoops: 3, targetZipKB: 300 };
 
 /** Off by default. Color and width are preset so turning it on gives a standard 1px line. */
 export const DEFAULT_BORDER: BorderSetting = { enabled: false, color: '#000000', width: 1 };

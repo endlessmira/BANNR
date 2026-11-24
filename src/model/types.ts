@@ -32,6 +32,8 @@ export interface Project {
 export interface ProjectSettings {
   maxAnimationSeconds: number; // default 30
   maxLoops: number;            // default 3
+  /** Banner weight target in KB; over it is a warning. Default 300. */
+  targetZipKB?: number;
 }
 
 /* ───────────── Size / Artboard ───────────── */

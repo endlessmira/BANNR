@@ -14,10 +14,15 @@ describe('exit architecture', () => {
     expect(out.html.indexOf(`id="${CLICK_LAYER_ID}"`)).toBeLessThan(out.html.indexOf('id="eT"'));
   });
 
-  it('the preview defines bannr.exit() and bannr.track()', () => {
-    const inj = previewInjection('https://example.com/?a=1');
-    expect(inj.bodyEnd).toContain('bannr.exit=function(){window.open("https://example.com/?a=1",\'_blank\');}');
-    expect(inj.bodyEnd).toContain('bannr.track=function(n)');
+  it('the preview runs the platform click code and reports tracked events', () => {
+    const size = createSize(300, 250);
+    const cm = previewInjection(createProject('C', { platform: 'cm360', sizes: [size], landingUrl: 'https://example.com/?a=1' }), size);
+    expect(cm.head).toContain('var clickTag = "https://example.com/?a=1";');
+    expect(cm.bodyEnd).toContain("bannr.exit = function(){ window.open(window.clickTag, '_blank'); };");
+    expect(cm.bodyEnd).toContain('bannr.track=function(n)');
+    const ad = previewInjection(createProject('A', { platform: 'adform', sizes: [size] }), size);
+    expect(ad.head.indexOf('window.API_URL=')).toBeGreaterThan(-1);
+    expect(ad.head.indexOf('window.API_URL=')).toBeLessThan(ad.head.indexOf('Adform.DHTML.js'));
   });
 });
 

@@ -1,3 +1,5 @@
+import { getAdapter } from '@/export/adapters/registry';
+import type { Project, Size } from '@/model/types';
 import { jsString } from './escape';
 
 export const TEST_CLICK_MESSAGE = 'bannr:test-click';
@@ -37,14 +39,19 @@ export const PREVIEW_HEAD_SHIM =
   '})();<\/script>';
 
 /**
- * Preview definitions of bannr.exit() and bannr.track(). In Phase 5 the selected platform
- * adapter's code replaces exit(), so the preview runs exactly what will be exported.
+ * Preview injection: the selected platform's REAL head and click code (the same strings the export uses),
+ * plus preview-only globals (e.g. an Adform dhtml stub, so nothing loads from the network) and a
+ * bannr.track() that reports events to the editor.
  */
-export function previewInjection(landingUrl: string): { head: string; bodyEnd: string } {
+export function previewInjection(project: Project, size: Size): { head: string; bodyEnd: string } {
+  const a = getAdapter(project.selectedPlatform);
   return {
-    head: PREVIEW_HEAD_SHIM,
-    bodyEnd:
-      `<script>bannr.exit=function(){window.open(${jsString(landingUrl)},'_blank');};` +
-      `bannr.track=function(n){parent.postMessage({type:${jsString(TRACK_MESSAGE)},name:String(n)},'*');};<\/script>`,
+    head: [PREVIEW_HEAD_SHIM, a.previewGlobals ? `<script>${a.previewGlobals}<\/script>` : '', a.injectHead(size, project)]
+      .filter(Boolean)
+      .join('\n'),
+    bodyEnd: [
+      a.injectClickScript(project),
+      `<script>bannr.track=function(n){parent.postMessage({type:${jsString(TRACK_MESSAGE)},name:String(n)},'*');};<\/script>`,
+    ].join('\n'),
   };
 }

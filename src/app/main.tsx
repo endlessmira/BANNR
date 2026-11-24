@@ -9,6 +9,8 @@ import '@/styles/sizes.css';
 import '@/styles/fonts.css';
 import '@/styles/animation.css';
 import '@/styles/timeline.css';
+import '@/styles/export.css';
+import '@/styles/validation.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root element missing');

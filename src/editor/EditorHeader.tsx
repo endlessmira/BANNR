@@ -13,11 +13,12 @@ interface Props {
   mode: EditorMode;
   onModeChange: (mode: EditorMode) => void;
   onExit: () => void;
+  onExport: () => void;
 }
 
 const SAVE_LABEL: Record<SaveStatus, string> = { saved: 'All changes saved', saving: 'Saving…', error: 'Save failed' };
 
-export function EditorHeader({ project, saveStatus, mode, onModeChange, onExit }: Props) {
+export function EditorHeader({ project, saveStatus, mode, onModeChange, onExit, onExport }: Props) {
   const canUndo = useEditorStore((s) => s.past.length > 0);
   const canRedo = useEditorStore((s) => s.future.length > 0);
   const undo = useEditorStore((s) => s.undo);
@@ -62,6 +63,7 @@ export function EditorHeader({ project, saveStatus, mode, onModeChange, onExit }
           <button aria-pressed={mode === 'preview'} onClick={() => onModeChange('preview')}>Preview</button>
         </div>
         <span className="platform-badge" title="Target ad platform">{PLATFORM_LABELS[project.selectedPlatform]}</span>
+        <button className="primary small-btn header-export" onClick={onExport} title="Download ad-server-ready zips">Export</button>
       </div>
     </header>
   );

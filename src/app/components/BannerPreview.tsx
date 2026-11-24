@@ -35,7 +35,7 @@ export function BannerPreview({
     () => renderBanner(project, sizeId, {
       resolveAsset: (id) => assetUrls[id] ?? '',
       animationEngine: cssKeyframesEngine,
-      injection: previewInjection(project.landingUrl),
+      injection: previewInjection(project, size),
     }).html,
     [project, sizeId, assetUrls],
   );
