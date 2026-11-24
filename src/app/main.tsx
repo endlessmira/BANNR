@@ -7,6 +7,7 @@ import '@/styles/canvas.css';
 import '@/styles/panels.css';
 import '@/styles/sizes.css';
 import '@/styles/fonts.css';
+import '@/styles/animation.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root element missing');

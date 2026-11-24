@@ -3,6 +3,7 @@ import type { BannerElement, BoxStyle, GroupElement, ID, ImageElement, Size, Tex
 import type { UploadTarget } from '../assets';
 import { FontsDialog } from '../fonts/FontsDialog';
 import { fontOptions } from '../fonts/fontOptions';
+import { AnimationSection, LoopSettings } from './AnimationSection';
 import { normalizeAngle } from '../geometry';
 import { mutateSize } from '../mutate';
 import { findElement, setFrame } from '../ops';
@@ -125,6 +126,7 @@ function ElementProperties({ el, onUpload }: { el: BannerElement; onUpload: OnUp
         {(el.type === 'text' || el.type === 'button') && <Typography id={id} t={el.textStyle} isText={el.type === 'text'} />}
         {el.type === 'image' && <ImageSection el={el} onUpload={onUpload} />}
         {el.type !== 'group' && <BoxSections el={el} />}
+        <AnimationSection el={el} />
         {el.type === 'group' && (
           <p className="muted small">Resizing a group scales its layers (not font sizes). Ungroup to edit layers individually.</p>
         )}
@@ -329,6 +331,7 @@ function SizeProperties({ size, onUpload }: { size: Size; onUpload: OnUpload }) 
           )}
         </Section>
 
+        <LoopSettings size={size} />
         <Section title="Border">
           <label className="check">
             <input

@@ -1,11 +1,11 @@
 import { type DragEvent, type ReactNode, useCallback, useState } from 'react';
-import { BannerPreview } from '@/app/components/BannerPreview';
+import { BannerPreview, type PlayState } from '@/app/components/BannerPreview';
 import type { BannerElement } from '@/model/types';
 import type { TestClickMessage } from '@/renderer/preview';
 import { type UploadTarget, uploadImages, useAssetUrls } from './assets';
-import { useDocumentFonts } from './fonts/useDocumentFonts';
 import { EditorCanvas } from './canvas/EditorCanvas';
 import { type EditorMode, EditorHeader } from './EditorHeader';
+import { useDocumentFonts } from './fonts/useDocumentFonts';
 import { useAutosave } from './hooks/useAutosave';
 import { useEditorShortcuts } from './hooks/useEditorShortcuts';
 import { useElementSize } from './hooks/useElementSize';
@@ -13,6 +13,7 @@ import { findElement, findSize } from './ops';
 import { LayersPanel } from './panels/LayersPanel';
 import { PropertiesPanel } from './panels/PropertiesPanel';
 import { SizesPanel } from './panels/SizesPanel';
+import { PreviewControls } from './PreviewControls';
 import { useEditorStore } from './store/editorStore';
 import { Toolbar, type ZoomMode } from './Toolbar';
 
@@ -38,6 +39,8 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const [stageRef, stage] = useElementSize<HTMLElement>();
   const [lastClick, setLastClick] = useState<TestClickMessage | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [playState, setPlayState] = useState<PlayState>('playing');
+  const [restartKey, setRestartKey] = useState(0);
   const onTestClick = useCallback((m: TestClickMessage) => setLastClick(m), []);
   const assetUrls = useAssetUrls(project);
   useDocumentFonts(project, assetUrls);
@@ -48,6 +51,19 @@ export function EditorView({ onExit }: { onExit: () => void }) {
       (e: unknown) => setNotice(`Upload failed: ${e instanceof Error ? e.message : String(e)}`),
     );
   }, []);
+
+  const restart = useCallback(() => {
+    setPlayState('playing');
+    setRestartKey((k) => k + 1);
+  }, []);
+
+  const changeMode = useCallback((m: EditorMode) => {
+    setMode(m);
+    if (m === 'preview') {
+      setLastClick(null);
+      restart();
+    }
+  }, [restart]);
 
   const size = project ? findSize(project, activeSizeId) : undefined;
   if (!project || !size) return null;
@@ -73,7 +89,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
 
   return (
     <div className="editor">
-      <EditorHeader project={project} saveStatus={saveStatus} mode={mode} onModeChange={setMode} onExit={onExit} />
+      <EditorHeader project={project} saveStatus={saveStatus} mode={mode} onModeChange={changeMode} onExit={onExit} />
       <main className="workspace">
         <aside className="panel">
           <SizesPanel project={project} activeSizeId={size.id} />
@@ -100,14 +116,28 @@ export function EditorView({ onExit }: { onExit: () => void }) {
           onDragOver={onDragOver}
           onDrop={onDrop}
         >
-          {mode === 'edit' && (
+          {mode === 'edit' ? (
             <Toolbar zoomMode={zoomMode} zoom={zoom} onZoomChange={setZoomMode} selectionCount={editableCount} onUpload={onUpload} />
+          ) : (
+            <PreviewControls
+              size={size}
+              playState={playState}
+              onToggle={() => setPlayState((p) => (p === 'playing' ? 'paused' : 'playing'))}
+              onRestart={restart}
+            />
           )}
           <ZoomBox width={size.width} height={size.height} zoom={zoom}>
             {mode === 'edit' ? (
               <EditorCanvas project={project} sizeId={size.id} assetUrls={assetUrls} zoom={zoom} />
             ) : (
-              <BannerPreview project={project} sizeId={size.id} assetUrls={assetUrls} onTestClick={onTestClick} />
+              <BannerPreview
+                project={project}
+                sizeId={size.id}
+                assetUrls={assetUrls}
+                onTestClick={onTestClick}
+                playState={playState}
+                restartKey={restartKey}
+              />
             )}
           </ZoomBox>
           {mode === 'preview' && lastClick && (

@@ -1,0 +1,6 @@
+/* Phase 4a: animation panel + preview controls */
+.anim-step { display: flex; flex-direction: column; gap: 8px; }
+.anim-step + .anim-step { padding-top: 10px; border-top: 1px dashed var(--line); }
+.anim-warn { margin: 0; padding: 6px 8px; border-radius: 6px; border: 1px solid #e5a50a; font-size: 12px; line-height: 1.4; color: var(--amber-soft); }
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.preview-controls .tb-btn { padding: 0 12px; }
