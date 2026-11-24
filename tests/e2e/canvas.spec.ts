@@ -15,8 +15,8 @@ test('every element can be selected by clicking it', async ({ page }) => {
     await page.locator(`.hitbox[data-name="${name}"]`).click();
     await expect(page.locator('.props-title')).toHaveText(name);
   }
-  // The Glow is mostly outside the banner, so click its visible part.
-  await page.locator('.hitbox[data-name="Glow"]').click({ position: { x: 40, y: 140 } });
+  // The Glow is partly outside the banner, so click its visible part.
+  await page.locator('.hitbox[data-name="Glow"]').click({ position: { x: 40, y: 300 } });
   await expect(page.locator('.props-title')).toHaveText('Glow');
 });
 
@@ -28,16 +28,16 @@ test('dragging moves an element and undo restores it', async ({ page }) => {
   await page.mouse.down();
   await page.mouse.move(cx + 30, cy, { steps: 6 });
   await page.mouse.up();
-  await expect(field(page, 'X')).toHaveValue('50');
-  await expect(field(page, 'Y')).toHaveValue('190');
+  await expect(field(page, 'X')).toHaveValue('70');
+  await expect(field(page, 'Y')).toHaveValue('370');
   await page.keyboard.press('Control+z');
-  await expect(field(page, 'X')).toHaveValue('20');
+  await expect(field(page, 'X')).toHaveValue('40');
 });
 
 test('arrow keys nudge the selection', async ({ page }) => {
   await page.locator('.hitbox[data-name="CTA"]').click();
   await page.keyboard.press('Shift+ArrowRight');
   await page.keyboard.press('ArrowDown');
-  await expect(field(page, 'X')).toHaveValue('30');
-  await expect(field(page, 'Y')).toHaveValue('191');
+  await expect(field(page, 'X')).toHaveValue('50');
+  await expect(field(page, 'Y')).toHaveValue('371');
 });

@@ -2,7 +2,7 @@
  * BANNR document schema. Everything here must stay JSON-serialisable.
  * Bump SCHEMA_VERSION and add a migration in migrations.ts for any breaking change.
  */
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 export type ID = string;
 export type ISODateString = string;

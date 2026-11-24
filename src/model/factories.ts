@@ -1,4 +1,5 @@
 import { newId } from './ids';
+import { MASTER_SIZE } from './sizes';
 import {
   SCHEMA_VERSION,
   type BannerElement, type BorderSetting, type BoxStyle, type ButtonElement, type ElementBase,
@@ -131,7 +132,7 @@ export function createProject(name: string, opts: NewProjectOptions): Project {
   // Runtime check too, for JS callers and imported data.
   if (!opts?.platform) throw new Error('A platform must be chosen when creating a project');
   const now = (opts.clock ?? systemClock)();
-  const sizes = opts.sizes ?? [createSize(300, 250)];
+  const sizes = opts.sizes ?? [createSize(MASTER_SIZE.width, MASTER_SIZE.height)];
   return {
     schemaVersion: SCHEMA_VERSION,
     id: newId('p'),

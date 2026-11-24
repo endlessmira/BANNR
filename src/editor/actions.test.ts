@@ -7,7 +7,10 @@ const state = () => useEditorStore.getState();
 const elements = () => state().project!.sizes.find((s) => s.id === state().activeSizeId)!.elements;
 const byName = (n: string) => elements().find((e) => e.name === n)!;
 
-beforeEach(() => state().load(createDemoProject({ platform: 'cm360' })));
+beforeEach(() => {
+  state().load(createDemoProject({ platform: 'cm360' }));
+  state().setActiveSize(state().project!.sizes[1]!.id); // 300×250
+});
 
 describe('editor actions', () => {
   it('adds an element centred, on top, and selects it', () => {
@@ -28,7 +31,7 @@ describe('editor actions', () => {
   });
 
   it('never moves locked elements', () => {
-    state().update((d) => { d.sizes[0]!.elements[2]!.locked = true; });
+    state().update((d) => { d.sizes[1]!.elements[2]!.locked = true; });
     state().select([byName('Headline').id]);
     nudge(5, 5);
     expect(byName('Headline').x).toBe(20);
@@ -56,7 +59,7 @@ describe('editor actions', () => {
   });
 
   it('select all skips locked elements', () => {
-    state().update((d) => { d.sizes[0]!.elements[1]!.locked = true; });
+    state().update((d) => { d.sizes[1]!.elements[1]!.locked = true; });
     selectAll();
     expect(state().selection).toHaveLength(3);
   });

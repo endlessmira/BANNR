@@ -9,13 +9,21 @@ import { type AssetStore, type ProjectRepository, type ProjectSummary, toSummary
 export class IndexedDbProjectRepository implements ProjectRepository {
   private readonly db: UseStore = createStore('bannr-projects', 'projects');
 
+  /** Migrates old documents and writes the upgraded version back, so generated IDs stay stable. */
+  private async upgrade(raw: unknown): Promise<Project> {
+    const p = migrateProject(raw);
+    if (p !== raw) await set(p.id, p, this.db);
+    return p;
+  }
+
   async list(): Promise<ProjectSummary[]> {
     const all = await values<unknown>(this.db);
-    return all.map((raw) => toSummary(migrateProject(raw))).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const projects = await Promise.all(all.map((raw) => this.upgrade(raw)));
+    return projects.map(toSummary).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   }
   async get(id: ID): Promise<Project | undefined> {
     const raw = await get<unknown>(id, this.db);
-    return raw === undefined ? undefined : migrateProject(raw);
+    return raw === undefined ? undefined : this.upgrade(raw);
   }
   async save(project: Project): Promise<void> {
     await set(project.id, project, this.db);

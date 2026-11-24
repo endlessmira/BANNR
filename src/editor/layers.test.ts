@@ -11,7 +11,10 @@ const elements = () => state().project!.sizes.find((s) => s.id === state().activ
 const names = () => stackOrder(elements()).map((e) => e.name);
 const byName = (n: string) => elements().find((e) => e.name === n)!;
 
-beforeEach(() => state().load(createDemoProject({ platform: 'adform' })));
+beforeEach(() => {
+  state().load(createDemoProject({ platform: 'adform' }));
+  state().setActiveSize(state().project!.sizes[1]!.id); // 300×250
+});
 
 describe('layers', () => {
   it('brings to front and sends to back', () => {

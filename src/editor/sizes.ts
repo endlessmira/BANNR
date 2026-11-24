@@ -13,11 +13,12 @@ export interface AddResult { added: ID[]; skipped: string[] }
 const labelFor = (w: number, h: number): string | undefined =>
   STANDARD_SIZES.find((s) => s.width === w && s.height === h)?.label;
 
+/** The fixed 480×480 master. */
 export function masterOf(p: Project): Size | undefined {
   return p.sizes.find((s) => s.id === p.masterSizeId) ?? p.sizes[0];
 }
 
-/** Adds sizes (one undo step). Duplicates and out-of-range sizes are skipped. */
+/** Adds sizes (one undo step). Duplicates (including 480×480) and out-of-range sizes are skipped. */
 export function addSizes(dims: readonly Dim[], mode: AddMode): AddResult {
   const st = useEditorStore.getState();
   const p = st.project;
@@ -50,14 +51,13 @@ export function addSizes(dims: readonly Dim[], mode: AddMode): AddResult {
   return { added: created.map((s) => s.id), skipped };
 }
 
-/** Deletes a size (undoable). The last remaining size can't be deleted. */
+/** Deletes a size (undoable). The master can never be deleted. */
 export function removeSize(id: ID): boolean {
   const st = useEditorStore.getState();
   const p = st.project;
-  if (!p || p.sizes.length <= 1 || !p.sizes.some((s) => s.id === id)) return false;
+  if (!p || id === p.masterSizeId || !p.sizes.some((s) => s.id === id)) return false;
   st.update((d) => {
     d.sizes = d.sizes.filter((s) => s.id !== id);
-    if (d.masterSizeId === id) d.masterSizeId = d.sizes[0]?.id ?? null;
     for (const s of d.sizes) if (s.derivedFrom === id) delete s.derivedFrom;
   });
   const after = useEditorStore.getState();
@@ -66,13 +66,6 @@ export function removeSize(id: ID): boolean {
     if (next) after.setActiveSize(next);
   }
   return true;
-}
-
-export function setMaster(id: ID): void {
-  const st = useEditorStore.getState();
-  const p = st.project;
-  if (!p || p.masterSizeId === id || !p.sizes.some((s) => s.id === id)) return;
-  st.update((d) => { d.masterSizeId = id; });
 }
 
 /** Replaces a size's layout and background with a fresh adaptation of the master (undoable). */

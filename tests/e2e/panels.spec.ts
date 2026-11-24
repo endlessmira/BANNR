@@ -24,7 +24,7 @@ test('properties panel edits position', async ({ page }) => {
 });
 
 test('banner border can be switched on', async ({ page }) => {
-  await expect(page.locator('.props-title')).toHaveText('Banner 300×250');
+  await expect(page.locator('.props-title')).toHaveText('Banner 480×480');
   await expect(page.locator('.bannr-border')).toHaveCount(0);
   await page.getByLabel('Add border').check();
   await expect(page.locator('.bannr-border')).toHaveCount(1);
