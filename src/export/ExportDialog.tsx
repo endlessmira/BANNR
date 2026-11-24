@@ -162,7 +162,7 @@ export function ExportDialog({ project, assetUrls, onClose }: Props) {
             </label>
             <label className="field">
               <span>Landing URL</span>
-              <input aria-label="Landing URL" spellCheck={false} value={landing} placeholder="https://"
+              <input aria-label="Landing URL" spellCheck={false} value={landing} placeholder="Optional: leave empty to set it in the ad server or DSP"
                 onChange={(e) => setLandingUrl(e.target.value)} />
             </label>
           </div>

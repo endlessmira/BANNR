@@ -108,7 +108,9 @@ export function runChecks(input: CheckInput): ValidationResult[] {
   } catch {
     url = null;
   }
-  if (!url || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
+  if (project.landingUrl.trim() === '') {
+    out.push(res('landing-url', 'warning', 'No landing URL yet. Set the click-through URL in the ad server or DSP before the campaign goes live.'));
+  } else if (!url || (url.protocol !== 'https:' && url.protocol !== 'http:')) {
     out.push(res('landing-url', 'error', 'Enter a valid landing URL, starting with https://'));
   } else if (url.protocol === 'http:') {
     out.push(res('landing-url', 'warning', 'The landing URL uses http://. Most platforms expect https://.'));

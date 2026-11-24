@@ -140,7 +140,7 @@ export function createProject(name: string, opts: NewProjectOptions): Project {
     createdAt: now,
     updatedAt: now,
     selectedPlatform: opts.platform,
-    landingUrl: opts.landingUrl ?? 'https://www.example.com',
+    landingUrl: opts.landingUrl ?? '',
     masterSizeId: sizes[0]?.id ?? null,
     sizes,
     assets: {},

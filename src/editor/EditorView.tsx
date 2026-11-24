@@ -158,7 +158,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
             </ZoomBox>
             <KbCounter project={project} sizeId={size.id} />
             {mode === 'preview' && lastClick && (
-              <div className="toast">Test click → <code>{lastClick.url}</code> ({lastClick.target})</div>
+              <div className="toast">{lastClick.url ? <>Test click → <code>{lastClick.url}</code> ({lastClick.target})</> : 'Test click: no landing URL yet. It will be set in the ad server or DSP.'}</div>
             )}
             {notice && (
               <div className="toast toast-warn" role="alert">

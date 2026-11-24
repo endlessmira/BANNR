@@ -18,7 +18,7 @@ export interface Project {
   updatedAt: ISODateString;
   /** Always chosen explicitly by the user when the project is created. */
   selectedPlatform: PlatformId;
-  /** Default/test landing URL. Used as the clickTag fallback at export. */
+  /** Landing URL, used as the clickTag fallback. May be empty: the ad server or DSP sets it later. */
   landingUrl: string;
   /** The size other sizes are generated from (multi-size workflow). */
   masterSizeId: ID | null;

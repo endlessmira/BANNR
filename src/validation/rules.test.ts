@@ -10,7 +10,7 @@ const deps: ExportDeps = { loadAsset: async () => undefined, webpToPng: async (b
 
 function project(platform: PlatformId): Project {
   const size = createSize(300, 250, { elements: [createText({ id: 'eT' })] });
-  return createProject('Checks', { platform, sizes: [size] });
+  return createProject('Checks', { platform, sizes: [size], landingUrl: 'https://www.example.com' });
 }
 async function built(p: Project): Promise<{ size: Size; manifest: ZipManifest }> {
   const size = p.sizes[0]!;

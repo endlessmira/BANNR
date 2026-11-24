@@ -29,7 +29,7 @@ export function clickTagVarChecks(zip: ZipManifest): ValidationResult[] {
   return [
     check('ad-size-meta', head.includes('<meta name="ad.size"'),
       'The ad.size meta tag is in the head', 'The ad.size meta tag is missing from the head'),
-    check('click-tag', /var clickTag = "[^"]+";/.test(head),
+    check('click-tag', /var clickTag = "[^"]*";/.test(head),
       'clickTag is declared in the head with the exact casing "clickTag"',
       'clickTag must be declared in the head as: var clickTag = "…";'),
   ];
