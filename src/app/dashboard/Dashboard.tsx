@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import logoUrl from '@/assets/bannr-logo.svg';
 import { saveQueue } from '@/editor/hooks/useAutosave';
-import { createDemoProject } from '@/model/demo';
-import { cloneProject } from '@/model/factories';
+import { cloneProject, createProject } from '@/model/factories';
 import { PLATFORM_LABELS } from '@/model/platforms';
 import type { ID, Project } from '@/model/types';
 import { projectRepo } from '@/persistence';
@@ -33,9 +32,9 @@ export function Dashboard({ onOpen }: { onOpen: (id: ID) => void }) {
     await refresh();
   };
 
-  // Until templates arrive (Phase 3), new projects start from the BANNR demo layout.
+  // New projects start empty: just the 480×480 master. Sizes and elements are added in the editor.
   const create = async ({ name, platform }: NewProjectInput) => {
-    const p = createDemoProject({ name, platform });
+    const p = createProject(name, { platform });
     await projectRepo.save(p);
     onOpen(p.id);
   };

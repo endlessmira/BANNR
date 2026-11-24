@@ -1,25 +1,21 @@
 import { expect, test } from '@playwright/test';
+import { addAt, field, newProject } from './helpers';
 
 const PNG_1PX = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
-test.beforeEach(async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: '+ New project' }).click();
-  await page.getByLabel('Adform').check();
-  await page.getByRole('button', { name: 'Create project' }).click();
-  await expect(page.locator('.canvas')).toBeVisible();
-});
+test.beforeEach(async ({ page }) => { await newProject(page); });
 
 test('layers panel hides and shows an element', async ({ page }) => {
-  await page.getByRole('button', { name: 'Hide Headline' }).click();
-  await expect(page.locator('.hitbox[data-name="Headline"]')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Show Headline' }).click();
-  await expect(page.locator('.hitbox[data-name="Headline"]')).toHaveCount(1);
+  await addAt(page, 'Add text', 20, 20);
+  await page.getByRole('button', { name: 'Hide Text' }).click();
+  await expect(page.locator('.hitbox[data-name="Text"]')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Show Text' }).click();
+  await expect(page.locator('.hitbox[data-name="Text"]')).toHaveCount(1);
 });
 
 test('properties panel edits position', async ({ page }) => {
-  await page.locator('.hitbox[data-name="CTA"]').click();
-  await page.getByRole('spinbutton', { name: 'X', exact: true }).fill('100');
+  await page.getByTitle('Add CTA button', { exact: true }).click();
+  await field(page, 'X').fill('100');
   await expect(page.locator('.hitbox[data-name="CTA"]')).toHaveCSS('left', '100px');
 });
 
