@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { BannerElement, BoxStyle, GroupElement, ID, ImageElement, Size, TextStyle } from '@/model/types';
+import type { BannerElement, BoxStyle, ComponentElement, GroupElement, ID, ImageElement, Size, TextStyle } from '@/model/types';
 import type { UploadTarget } from '../assets';
 import { FontsDialog } from '../fonts/FontsDialog';
 import { fontOptions } from '../fonts/fontOptions';
@@ -25,7 +25,7 @@ const FITS: Opt<ImageElement['fit']> = [['contain', 'Contain'], ['cover', 'Cover
 const BG_FITS: Opt<'cover' | 'contain'> = [['cover', 'Cover'], ['contain', 'Contain']];
 const STROKES: Opt<'solid' | 'dashed' | 'dotted'> = [['solid', 'Solid'], ['dashed', 'Dashed'], ['dotted', 'Dotted']];
 const TYPE_LABEL: Record<BannerElement['type'], string> = {
-  text: 'Text', image: 'Image', shape: 'Shape', button: 'CTA button', group: 'Group',
+  text: 'Text', image: 'Image', shape: 'Shape', button: 'CTA button', group: 'Group', component: 'Component',
 };
 const SHADOW_KEYS = [['x', 'X'], ['y', 'Y'], ['blur', 'Blur'], ['spread', 'Spread']] as const;
 
@@ -48,7 +48,7 @@ function editText(id: ID, field: string, fn: (t: TextStyle) => void): void {
 
 function editBox(id: ID, field: string, fn: (b: BoxStyle) => void): void {
   editEl(id, field, (el) => {
-    if (el.type === 'group') return;
+    if (el.type === 'group' || el.type === 'component') return;
     if (el.type === 'text' || el.type === 'image') fn(el.box ?? (el.box = {}));
     else fn(el.box);
   });
@@ -125,8 +125,11 @@ function ElementProperties({ el, onUpload }: { el: BannerElement; onUpload: OnUp
 
         {(el.type === 'text' || el.type === 'button') && <Typography id={id} t={el.textStyle} isText={el.type === 'text'} />}
         {el.type === 'image' && <ImageSection el={el} onUpload={onUpload} />}
-        {el.type !== 'group' && <BoxSections el={el} />}
+        {el.type !== 'group' && el.type !== 'component' && <BoxSections el={el} />}
         <AnimationSection el={el} />
+        {el.type === 'component' && (
+          <p className="muted small">Component: {el.componentType}. Its settings arrive with the component library in Phase 7.</p>
+        )}
         {el.type === 'group' && (
           <p className="muted small">Resizing a group scales its layers (not font sizes). Ungroup to edit layers individually.</p>
         )}
@@ -211,7 +214,7 @@ function ImageSection({ el, onUpload }: { el: ImageElement; onUpload: OnUpload }
   );
 }
 
-function BoxSections({ el }: { el: Exclude<BannerElement, GroupElement> }) {
+function BoxSections({ el }: { el: Exclude<BannerElement, GroupElement | ComponentElement> }) {
   const id = el.id;
   const box = el.box;
   const stroke = box?.stroke;

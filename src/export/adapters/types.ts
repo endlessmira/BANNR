@@ -20,7 +20,10 @@ export interface PlatformAdapter {
   /** Official spec link. Verified in Phase 5. */
   specUrl: string;
   injectHead(size: Size, project: Project): string;
+  /** Defines bannr.exit() for this platform. Nothing else in the banner may open URLs. */
   injectClickScript(project: Project): string;
+  /** Optional: JS that maps a component interaction event to platform tracking (default: no-op). */
+  trackEvent?(name: string): string;
   extraFiles(size: Size, project: Project): Record<string, string | Blob>;
   validate(zip: ZipManifest): ValidationResult[];
   constraints: PlatformConstraints;

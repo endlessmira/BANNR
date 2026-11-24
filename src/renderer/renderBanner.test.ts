@@ -11,7 +11,7 @@ function fixture(): { project: Project; sizeId: string } {
       createText({ id: 'eHead', text: 'Hello <b>&</b>\nworld', zIndex: 2 }),
       createImage({ id: 'eImg', assetId: 'aLogo', zIndex: 1 }),
       createImage({ id: 'eHidden', assetId: 'aUnused', hidden: true }),
-      createShape({ id: 'eBad', box: { fill: { kind: 'solid', color: 'red;}</style><script>alert(1)</script>' } } }),
+      createShape({ id: 'eBad', box: { fill: { kind: 'solid', color: 'red;}</style><script>alert(1)<\/script>' } } }),
       createButton({ id: 'eCta', label: 'Shop now', zIndex: 5 }),
     ],
   });
@@ -25,6 +25,7 @@ describe('renderBanner', () => {
     const out = renderBanner(project, sizeId, { resolveAsset: resolve });
     expect(out.html.startsWith('<!DOCTYPE html>')).toBe(true);
     expect(out.css).toContain('#banner{position:relative;overflow:hidden;width:300px;height:250px');
+    expect(out.css).toMatch(/#banner\{[^}]*isolation:isolate/);
   });
 
   it('is deterministic (pure)', () => {
@@ -49,19 +50,20 @@ describe('renderBanner', () => {
     expect(out.html).toContain('src="images/aLogo.png"');
   });
 
-  it('orders by zIndex and puts the click layer last and on top', () => {
+  it('orders by zIndex, puts the click layer at the bottom and lets clicks pass through layers', () => {
     const { project, sizeId } = fixture();
     const { html, css } = renderBanner(project, sizeId, { resolveAsset: resolve });
     expect(html.indexOf('id="eImg"')).toBeLessThan(html.indexOf('id="eHead"'));
-    expect(html.indexOf('id="clickArea"')).toBeGreaterThan(html.indexOf('id="eCta"'));
-    expect(css).toContain(`z-index:${CLICK_LAYER_Z}`);
+    expect(html.indexOf('id="clickArea"')).toBeLessThan(html.indexOf('id="eImg"'));
+    expect(css).toContain(`#clickArea{position:absolute;inset:0;cursor:pointer;background:transparent;z-index:${CLICK_LAYER_Z}}`);
+    expect(css).toContain('.el{pointer-events:none}');
   });
 
   it('places injections correctly and supports external css/js', () => {
     const { project, sizeId } = fixture();
     const out = renderBanner(project, sizeId, {
       resolveAsset: resolve, cssMode: 'external', jsMode: 'external',
-      injection: { head: '<meta name="x-head">', bodyEnd: '<script>/*click*/</script>' },
+      injection: { head: '<meta name="x-head">', bodyEnd: '<script>/*click*/<\/script>' },
     });
     expect(out.html.indexOf('<meta name="x-head">')).toBeLessThan(out.html.indexOf('</head>'));
     expect(out.html.indexOf('script.js')).toBeLessThan(out.html.indexOf('/*click*/'));

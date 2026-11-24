@@ -1,17 +1,17 @@
 import type { ID, Project, Size } from '@/model/types';
 import type { AnimationEngine } from './animation/engine';
 import { staticEngine } from './animation/static';
-import { BANNER_ROOT_ID, BORDER_Z, CLICK_LAYER_ID, CLICK_LAYER_Z } from './constants';
+import { BANNER_ROOT_ID, BORDER_Z, CLICK_LAYER_ID, CLICK_LAYER_Z, INTERACTIVE_CLASS } from './constants';
 import { cssUrl, paintCss, px, rule, safeColor } from './css';
 import { escapeHtml, jsString } from './escape';
 import { collectFontFamilies, fontFaceCss } from './fonts';
 import { type RenderContext, renderElements } from './renderElement';
 
 export interface RenderOptions {
-  /** Preview: blob/absolute URLs. Export: relative paths such as "images/logo.png". */
+  /** Preview: data/absolute URLs. Export: relative paths such as "images/logo.png". */
   resolveAsset: (assetId: ID) => string;
   animationEngine?: AnimationEngine;
-  /** Platform adapter output (Phase 5), or the preview shim. */
+  /** Platform adapter output (Phase 5) or the preview shim. bodyEnd defines bannr.exit() / bannr.track(). */
   injection?: { head?: string; bodyEnd?: string };
   cssMode?: 'inline' | 'external';
   jsMode?: 'inline' | 'external';
@@ -20,7 +20,7 @@ export interface RenderOptions {
 export interface RenderFragment {
   size: Size;
   css: string;
-  /** Full banner root, including the border overlay and click layer. */
+  /** Full banner root, including the click layer and border overlay. */
   bodyHtml: string;
   js: string;
   /** Only assets this size actually uses. The export pipeline copies just these. */
@@ -38,6 +38,22 @@ const BASE_CSS = [
   'html,body{width:100%;height:100%;overflow:hidden;background:transparent}',
   'body{-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}',
   'img{border:0}',
+  // Clicks fall through ordinary layers to the click layer underneath; interactive components opt back in.
+  '.el{pointer-events:none}',
+  `.el.${INTERACTIVE_CLASS}{pointer-events:auto}`,
+].join('\n');
+
+/**
+ * BANNR core: every click-through goes through bannr.exit(). The platform adapter (export) or the
+ * preview defines exit/track; these no-op defaults keep a bare render safe. Phase 7a grows this into
+ * the shared runtime (pointer utilities, tap-vs-drag, hints, visibility handling).
+ */
+const CORE_JS = [
+  'var bannr = window.bannr = window.bannr || {};',
+  'bannr.exit = bannr.exit || function () {};',
+  'bannr.track = bannr.track || function () {};',
+  `var clickArea = document.getElementById(${jsString(CLICK_LAYER_ID)});`,
+  "clickArea.addEventListener('click', function () { bannr.exit(); });",
 ].join('\n');
 
 export function getSize(project: Project, sizeId: ID): Size {
@@ -81,6 +97,7 @@ export function renderFragment(
       width: px(size.width),
       height: px(size.height),
       background: bgLayers.join(',') || undefined,
+      isolation: 'isolate',
     }),
     hasBorder
       ? rule('.bannr-border', {
@@ -100,18 +117,16 @@ export function renderFragment(
     .filter(Boolean)
     .join('\n');
 
+  // Click layer first (bottom), then the layers, then the border on top.
   const bodyHtml = [
     `<div id="${BANNER_ROOT_ID}">`,
+    `<div id="${CLICK_LAYER_ID}" aria-label="${escapeHtml(project.name)}"></div>`,
     elementsHtml,
     hasBorder ? '<div class="bannr-border"></div>' : '',
-    `<div id="${CLICK_LAYER_ID}" aria-label="${escapeHtml(project.name)}"></div>`,
     '</div>',
   ].join('');
 
-  // The platform click code (bodyEnd) relies on `clickArea` being defined here first.
-  const js = [`var clickArea = document.getElementById(${jsString(CLICK_LAYER_ID)});`, engine.runtime(size, project)]
-    .filter(Boolean)
-    .join('\n');
+  const js = [CORE_JS, engine.runtime(size, project)].filter(Boolean).join('\n');
 
   return { size, css, bodyHtml, js, usedAssetIds: [...used], externalScripts: [...engine.externalScripts] };
 }
@@ -134,7 +149,7 @@ export function renderBanner(project: Project, sizeId: ID, options: RenderOption
     '</head>',
     '<body>',
     frag.bodyHtml,
-    jsMode === 'inline' ? `<script>\n${frag.js}\n</script>` : '<script src="script.js"></script>',
+    jsMode === 'inline' ? `<script>\n${frag.js}\n<\/script>` : '<script src="script.js"><\/script>',
     options.injection?.bodyEnd,
     '</body>',
     '</html>',

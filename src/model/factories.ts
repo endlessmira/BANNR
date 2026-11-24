@@ -2,7 +2,7 @@ import { newId } from './ids';
 import { MASTER_SIZE } from './sizes';
 import {
   SCHEMA_VERSION,
-  type BannerElement, type BorderSetting, type BoxStyle, type ButtonElement, type ElementBase,
+  type BannerElement, type BorderSetting, type BoxStyle, type ComponentElement, type ButtonElement, type ElementBase,
   type GroupElement, type ID, type ISODateString, type ImageElement, type PlatformId, type Project,
   type ProjectSettings, type ShapeElement, type Size, type TextElement, type TextStyle,
 } from './types';
@@ -175,5 +175,27 @@ export function cloneProject(src: Project, opts: { name?: string; clock?: Clock 
     updatedAt: now,
     sizes,
     masterSizeId: src.masterSizeId ? (idMap.get(src.masterSizeId) ?? null) : null,
+  };
+}
+
+/** A component layer (Phase 7). The registry will supply real defaults per component type. */
+export function createComponent(
+  input: BaseInput & {
+    componentType: string;
+    componentVersion?: number;
+    preset?: string;
+    props?: ComponentElement['props'];
+    slots?: ComponentElement['slots'];
+  },
+): ComponentElement {
+  const { componentType, componentVersion = 1, preset, props = {}, slots = {}, ...rest } = input;
+  return {
+    ...base('Component', { width: 200, height: 200, ...rest }),
+    type: 'component',
+    componentType,
+    componentVersion,
+    ...(preset !== undefined ? { preset } : {}),
+    props,
+    slots,
   };
 }

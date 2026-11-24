@@ -8,6 +8,7 @@ const icon = (el: BannerElement): string =>
   : el.type === 'image' ? '▣'
   : el.type === 'button' ? '◼'
   : el.type === 'group' ? '❒'
+  : el.type === 'component' ? '✦'
   : el.shape === 'ellipse' ? '◯' : '▭';
 
 export function LayersPanel({ size }: { size: Size }) {

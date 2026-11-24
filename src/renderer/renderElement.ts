@@ -115,6 +115,15 @@ export function renderElement(el: BannerElement, ctx: RenderContext): string {
       ctx.css.push(rule(sel, frame));
       return `<div id="${id}" class="${cls}">${renderElements(el.children, ctx)}</div>`;
 
+    case 'component':
+      // Placeholder until the component registry (Phase 7a) supplies render() and the runtime.
+      ctx.css.push(rule(sel, {
+        ...frame, display: 'flex', 'align-items': 'center', 'justify-content': 'center', overflow: 'hidden',
+        border: '1px dashed rgba(127,127,127,0.8)', background: 'rgba(127,127,127,0.08)', color: '#888',
+        'font-family': 'Arial,Helvetica,sans-serif', 'font-size': '12px',
+      }));
+      return `<div id="${id}" class="${cls}" data-component="${escapeHtml(el.componentType)}"><span>${escapeText(el.componentType)}</span></div>`;
+
     default: {
       const never: never = el;
       throw new Error(`Unknown element type: ${(never as { type: string }).type}`);

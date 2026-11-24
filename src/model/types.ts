@@ -177,7 +177,25 @@ export interface GroupElement extends ElementBase {
   children: BannerElement[];
 }
 
-export type BannerElement = TextElement | ImageElement | ShapeElement | ButtonElement | GroupElement;
+/** A value placed in a component slot. */
+export type SlotValue = { kind: 'image'; assetId: ID } | { kind: 'text'; text: string };
+export type ComponentPropValue = string | number | boolean | null | string[] | number[];
+
+/**
+ * Interactive rich media element (Phase 7). Markup, settings schema and runtime come from the
+ * component registry; the document only stores which component it is and its settings.
+ */
+export interface ComponentElement extends ElementBase {
+  type: 'component';
+  componentType: string;
+  componentVersion: number;
+  preset?: string;
+  props: Record<string, ComponentPropValue>;
+  /** Slot name to values (repeatable slots hold several). */
+  slots: Record<string, SlotValue[]>;
+}
+
+export type BannerElement = TextElement | ImageElement | ShapeElement | ButtonElement | GroupElement | ComponentElement;
 export type ElementType = BannerElement['type'];
 
 /* ───────────── Assets & fonts ───────────── */
