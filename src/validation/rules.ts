@@ -2,7 +2,7 @@ import { DEFAULT_TARGET_KB } from '@/export/adapters/registry';
 import type { PlatformAdapter, ValidationLevel, ValidationResult, ZipManifest } from '@/export/adapters/types';
 import { animationEnd, totalSeconds } from '@/model/animation';
 import type { Project, Size } from '@/model/types';
-import { componentChecks } from './components';
+import { componentAllowedHosts, componentChecks } from './components';
 import { jsString } from '@/renderer/escape';
 
 /**
@@ -137,7 +137,7 @@ export function runChecks(input: CheckInput): ValidationResult[] {
     : res('exit-hardcoded', 'pass', 'The click handler uses the platform click tag'));
 
   const external = [...new Set(texts.flatMap((e) => externalUrls(e.text ?? '')))]
-    .filter((u) => !c.allowedExternalHosts.includes(hostOf(u)));
+    .filter((u) => !c.allowedExternalHosts.includes(hostOf(u)) && !componentAllowedHosts(size).includes(hostOf(u)));
   out.push(external.length > 0
     ? res('external-requests', 'error', 'The banner loads files from outside the zip', external.join(', '))
     : res('external-requests', 'pass',

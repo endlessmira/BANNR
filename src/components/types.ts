@@ -58,6 +58,12 @@ export interface ComponentDefinition {
   capturesPointer: boolean;
   /** Added full-banner at the bottom of the layer stack (e.g. animated backgrounds). */
   addAsBackground?: boolean;
+  /** Shown as a warning in the component settings (e.g. data collection). */
+  notice?: string;
+  /** Extra checklist issues for this component (e.g. required settings). */
+  validate?(props: ResolvedProps): Array<{ ruleId: string; level: 'error' | 'warning'; message: string; detail?: string }>;
+  /** Hosts this component may reference, exempt from the external-request check (e.g. a privacy link). */
+  allowedHosts?(props: ResolvedProps): string[];
   emits: readonly string[];
   /** Max JS + CSS for this component (excluding images), checked by unit tests. */
   weightBudgetKB: number;

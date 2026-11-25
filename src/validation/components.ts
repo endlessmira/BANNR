@@ -1,5 +1,5 @@
 import { getComponent } from '@/components/registry';
-import { missingSlots } from '@/components/settings';
+import { missingSlots, resolveProps } from '@/components/settings';
 import type { ValidationResult } from '@/export/adapters/types';
 import type { BannerElement, ComponentElement, Size } from '@/model/types';
 
@@ -41,6 +41,7 @@ export function componentChecks(size: Size): ValidationResult[] {
     if (missing.length > 0) {
       out.push({ ruleId: 'component-slots', level: 'error', message: `${name} has empty required slots`, detail: missing.join(', ') });
     }
+    if (def.validate) out.push(...def.validate(resolveProps(def, el.props, el.preset)));
     const fits = el.x >= -0.5 && el.y >= -0.5 && el.x + el.width <= size.width + 0.5 && el.y + el.height <= size.height + 0.5;
     if (top && !fits) {
       out.push({ ruleId: 'component-fit', level: 'warning', message: `${name} does not fit inside the banner, so part of it is cut off` });
@@ -48,6 +49,16 @@ export function componentChecks(size: Size): ValidationResult[] {
   }
   if (!out.some((r) => r.level === 'error')) {
     out.push({ ruleId: 'components', level: 'pass', message: `${found.length} component layer${found.length === 1 ? '' : 's'} ready` });
+  }
+  return out;
+}
+
+/** Hosts that components in this size may reference (e.g. the Lead Form's privacy policy link). */
+export function componentAllowedHosts(size: Size): string[] {
+  const out: string[] = [];
+  for (const { el } of collect(size.elements, true, [])) {
+    const def = getComponent(el.componentType);
+    if (def?.allowedHosts) out.push(...def.allowedHosts(resolveProps(def, el.props, el.preset)));
   }
   return out;
 }

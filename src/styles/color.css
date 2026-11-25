@@ -1,0 +1,4 @@
+/* Colour field with opacity */
+.cf-wrap { display: grid; grid-template-columns: minmax(0, 1fr) 76px; gap: 6px; align-items: center; }
+.cf-wrap .nf > span { min-width: 0; }
+.cf-wrap .nf input { padding-right: 2px; }

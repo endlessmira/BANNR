@@ -160,6 +160,7 @@ export function ComponentSettings({ el }: { el: ComponentElement }) {
           {def.icon} {def.label} · {componentWeightKB(def)} KB code · min {def.minSize.width}×{def.minSize.height}
           {def.capturesPointer ? ' · interactive' : ''}
         </p>
+        {def.notice ? <p className="anim-warn" role="note">{def.notice}</p> : null}
         {def.presets && def.presets.length > 0 ? (
           <SelectField label="Preset" value={el.preset ?? ''} options={presets} onChange={(v) => setComponentPreset(el.id, v || null)} />
         ) : null}

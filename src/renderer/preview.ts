@@ -26,7 +26,7 @@ export const isTimeMessage = (d: unknown): d is TimeMessage =>
  * - reports the current animation time so the timeline playhead can follow it.
  */
 export const PREVIEW_HEAD_SHIM =
-  '<script>(function(){' +
+  '<script>(function(){window.bannr=window.bannr||{};window.bannr.preview=true;' +
   `window.open=function(u,t){parent.postMessage({type:${jsString(TEST_CLICK_MESSAGE)},url:String(u),target:String(t||'_blank')},'*');return null;};` +
   'var anims=function(){return document.getAnimations?document.getAnimations():[];};' +
   `window.addEventListener('message',function(e){var d=e.data;if(!d||d.type!==${jsString(ANIM_MESSAGE)})return;` +

@@ -1,6 +1,7 @@
 import { type ReactNode, useEffect, useRef, useState } from 'react';
 import type { Paint } from '@/model/types';
 import { safeColor } from '@/renderer/css';
+import { formatColor, parseColor, toHex } from '@/model/color';
 import { ACCEPT_IMAGES } from '../assets';
 
 export type Opt<T extends string> = ReadonlyArray<readonly [T, string]>;
@@ -55,33 +56,51 @@ export function NumberField({ label, ariaLabel, value, onChange, min, max, step 
   );
 }
 
-const HEX6 = /^#[0-9a-f]{6}$/i;
-const HEX3 = /^#[0-9a-f]{3}$/i;
-function toHex6(c: string): string {
-  if (HEX6.test(c)) return c;
-  if (HEX3.test(c)) return `#${c.slice(1).split('').map((x) => x + x).join('')}`;
-  return '#000000';
-}
-
+/**
+ * Colour picker + text box + opacity %. Used by every colour setting (layers, banner, components).
+ * At 100% the value stays plain hex; below that it is saved as rgba().
+ */
 export function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (c: string) => void }) {
   const [text, setText] = useState(value);
   useEffect(() => setText(value), [value]);
+  const parsed = parseColor(value);
+  const base = parsed ?? { r: 0, g: 0, b: 0, a: 1 };
   return (
-    <label className="cf">
-      <span>{label}</span>
-      <input type="color" aria-label={`${label} picker`} value={toHex6(value)} onChange={(e) => onChange(e.target.value)} />
-      <input
-        type="text"
-        aria-label={label}
-        spellCheck={false}
-        value={text}
-        onChange={(e) => {
-          const v = e.target.value;
-          setText(v);
-          if (safeColor(v, '') !== '') onChange(v.trim());
-        }}
+    <div className="cf-wrap">
+      <label className="cf">
+        <span>{label}</span>
+        <input
+          type="color"
+          aria-label={`${label} picker`}
+          value={toHex(base)}
+          onChange={(e) => {
+            const n = parseColor(e.target.value);
+            // A fully transparent colour becomes visible again when a new colour is picked.
+            if (n) onChange(formatColor({ ...n, a: base.a === 0 ? 1 : base.a }));
+          }}
+        />
+        <input
+          type="text"
+          aria-label={label}
+          spellCheck={false}
+          value={text}
+          onChange={(e) => {
+            const v = e.target.value;
+            setText(v);
+            if (safeColor(v, '') !== '') onChange(v.trim());
+          }}
+        />
+      </label>
+      <NumberField
+        label="α"
+        ariaLabel={`${label} opacity`}
+        suffix="%"
+        min={0}
+        max={100}
+        value={Math.round(base.a * 100)}
+        onChange={(v) => { if (parsed) onChange(formatColor({ ...parsed, a: v / 100 })); }}
       />
-    </label>
+    </div>
   );
 }
 

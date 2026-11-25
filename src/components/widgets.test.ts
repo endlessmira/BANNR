@@ -15,7 +15,7 @@ const ctx = { id: 'x', sel: '#x', width: 300, height: 100 };
 
 describe('registry', () => {
   it('lists the motion and widget components', () => {
-    expect(listComponents().map((d) => d.type).sort()).toEqual(['cascade', 'clock', 'countdown', 'counter', 'gradient']);
+    expect(listComponents().map((d) => d.type).sort()).toEqual(['cascade', 'clock', 'countdown', 'counter', 'gradient', 'leadform']);
   });
 });
 
