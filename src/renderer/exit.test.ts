@@ -40,10 +40,10 @@ describe('component element', () => {
   });
 
   it('renders a placeholder until the component registry exists', () => {
-    const c = createComponent({ id: 'eC', componentType: 'cube' });
+    const c = createComponent({ id: 'eC', componentType: 'not-a-component' });
     const size = createSize(300, 250, { elements: [c] });
     const p = createProject('C', { platform: 'adform', sizes: [size] });
     const out = renderBanner(p, size.id, { resolveAsset: (id) => id });
-    expect(out.html).toContain('<div id="eC" class="el el-component" data-component="cube">');
+    expect(out.html).toContain('<div id="eC" class="el el-component" data-component="not-a-component">');
   });
 });

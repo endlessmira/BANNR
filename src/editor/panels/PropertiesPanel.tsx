@@ -5,6 +5,7 @@ import { FontsDialog } from '../fonts/FontsDialog';
 import { fontOptions } from '../fonts/fontOptions';
 import { AnimationSection, LoopSettings } from './AnimationSection';
 import { ComponentSettings } from '../componentPanel/ComponentSettings';
+import { canRotate } from '../componentPanel/actions';
 import { normalizeAngle } from '../geometry';
 import { mutateSize } from '../mutate';
 import { findElement, setFrame } from '../ops';
@@ -89,7 +90,7 @@ function ElementProperties({ el, onUpload }: { el: BannerElement; onUpload: OnUp
             <NumberField label="W" ariaLabel="Width" min={1} value={el.width} onChange={(v) => set('w', (e) => setFrame(e, { width: v }))} />
             <NumberField label="H" ariaLabel="Height" min={1} value={el.height} onChange={(v) => set('h', (e) => setFrame(e, { height: v }))} />
             <NumberField label="Rotate" ariaLabel="Rotation" suffix="°" value={el.rotation}
-              onChange={(v) => set('rot', (e) => { e.rotation = normalizeAngle(v); })} />
+              onChange={(v) => set('rot', (e) => { if (canRotate(e)) e.rotation = normalizeAngle(v); })} />
             <NumberField label="Opacity" suffix="%" min={0} max={100} value={Math.round(el.opacity * 100)}
               onChange={(v) => set('op', (e) => { e.opacity = Math.min(1, Math.max(0, v / 100)); })} />
           </div>

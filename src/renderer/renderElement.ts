@@ -94,7 +94,7 @@ function renderComponent(el: ComponentElement, ctx: RenderContext, id: string, f
   const slots = resolveSlots(def, el.slots, ctx.resolveAsset);
   const rctx = { id, sel: `#${id}`, width: el.width, height: el.height };
   const out = ctx.componentMode === 'backup' ? def.backupState(props, slots, rctx) : def.render(props, slots, rctx);
-  ctx.css.push(rule(`#${id}`, { ...frame, overflow: 'hidden' }));
+  ctx.css.push(rule(`#${id}`, { ...frame, ...(def.category === '3d' ? { rotate: undefined } : {}), overflow: 'hidden' }));
   if (out.css) ctx.css.push(out.css);
   // Pointer-capturing components sit above the click layer and catch swipes/drags themselves.
   const interactive = def.capturesPointer && ctx.componentMode === 'live' ? ` ${INTERACTIVE_CLASS}` : '';

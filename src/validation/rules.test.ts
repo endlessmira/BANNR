@@ -102,7 +102,7 @@ describe('pre-export checks', () => {
     expect(ids(check(p, size, manifest), 'error')).toContain('landing-url');
 
     const pc = project('cm360');
-    pc.sizes[0]!.elements.push(createComponent({ componentType: 'cube' }));
+    pc.sizes[0]!.elements.push(createComponent({ componentType: 'not-a-component' }));
     const b = await built(pc);
     expect(ids(check(pc, b.size, b.manifest), 'error')).toContain('component-unknown');
   });
