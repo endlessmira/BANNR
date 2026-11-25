@@ -2,7 +2,7 @@
 
 Browser-based HTML5 banner builder: drag-and-drop editor, animation, 26 interactive rich media components, and export of ad-server-ready zips for **Adform, CM360, DV360 and The Trade Desk**. Everything runs client-side.
 
-Status: **Phases 1–7 done**, plus a round of beta-test fixes. **All verified:** 244 Vitest unit tests (43 files) and 61 Playwright browser tests passing, including the latest Gesture changes (fade during the pause, single Gesture card). Everything is committed.
+Status: **Phases 1–7 done**, plus a round of beta-test fixes. **All verified:** 244 Vitest unit tests (43 files) and 62 Playwright browser tests passing, including the latest Gesture changes (fade during the pause, single Gesture card). Everything is committed.
 
 ---
 
@@ -134,5 +134,5 @@ Shared runtime (`bannr.*`): `gesture` (tap = under 10 px and 300 ms; a drag neve
 5. **Minification** of exported JS/CSS (the clickTag line must stay readable).
 6. **Somplo / Motionblender reference:** the demo link (demo.somplo.com/demo/434232369) couldn't be opened. Match the Gesture and Peel motion from screenshots or a recording if needed.
 7. **UX ideas offered, not built:** drag a label to change its number; tabs (Design / Animation / Component); changed-setting markers; multi-layer editing; pinned settings; an "Arrange ▾" menu to shorten the toolbar.
-8. **Small open choices:** Space on a focused checkbox toggles the mode (could tick it instead); Timeline/Preview labels still say "Loop"; no on/off for idle motion on Cube, Orbit, Panorama etc.; other components still show separate preset cards; a full-banner Lead Form covers the click layer.
+8. **Small open choices:** Space on a focused checkbox toggles the mode (could tick it instead); the "Loop settings" section in Properties still says "Loop"; no on/off for idle motion on Cube, Orbit, Panorama etc.; other components still show separate preset cards; a full-banner Lead Form covers the click layer.
 9. **Known limitations:** no dragging layers inside a Carousel Set (fields only); group contents not individually selectable; px bounce heights and slide distances aren't scaled for other sizes; an outside stroke on a full-banner layer is cut off (use the banner border); reduced motion isn't applied to entrance, emphasis and exit; the backup image is the final frame and 3D is drawn flat there; selecting layers under a full-banner Gesture needs the Gesture locked (or use the Layers panel).
