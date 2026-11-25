@@ -2,7 +2,7 @@
 
 Browser-based HTML5 banner builder: drag-and-drop editor, animation, 26 interactive rich media components, and export of ad-server-ready zips for **Adform, CM360, DV360 and The Trade Desk**. Everything runs client-side.
 
-Status: **Phases 1–7 done**, plus a round of beta-test fixes. Last verified state: about 61 Playwright browser tests and all Vitest unit tests passing. The final two changes (gesture fade during the pause, single Gesture card) were sent but **not yet confirmed as run**. Run `npm run check` and `npm run test:e2e` first.
+Status: **Phases 1–7 done**, plus a round of beta-test fixes. **All verified:** 244 Vitest unit tests (43 files) and 61 Playwright browser tests passing, including the latest Gesture changes (fade during the pause, single Gesture card). Everything is committed.
 
 ---
 
@@ -107,18 +107,22 @@ Shared runtime (`bannr.*`): `gesture` (tap = under 10 px and 300 ms; a drag neve
 | Games | Memory, Catch Falling Objects, Slice, Drag and Drop. Shared engine: start/win/lose screens, HUD, always-visible **Skip · Shop now**, Play again |
 
 - **Shared arrows and dots** (nav.ts) for Carousel, Carousel Set and Panorama (arrows only): icon, style, size, position, distance, colours, hover-only; dot style, size, position, colours.
-- **Gesture** (latest work): cursor (hand, mouse pointer, finger dot, touch ring) with fill and **outside** stroke, size, shadow. Gestures: tap, double tap, swipe left/right (starts on the right), swipe up/down, one-way swipes, drag A to B, scratch, circle, **hover** (left and right, no press). Repeats, then a Pause during which it **fades out and reappears**; easing; appear after; stop after (max 30 s). Hide when: hover or touch (default), touch or click, never. Ripple (off by default), label, optional in backup. Presets: Tap, Swipe, Swipe up and down, Scratch, Drag, Peel, Rotate, Hover; the Components panel shows **one "Gesture" card**. Never captures the pointer.
+- **Gesture** (latest work, verified): cursor (hand, mouse pointer, finger dot, touch ring) with fill and **outside** stroke (paint-order), size, shadow. Gestures: tap, double tap, swipe left/right (starts on the right), swipe up/down, one-way swipes, drag A to B, scratch, circle, **hover** (left and right, no press). Repeats, then a Pause during which it **fades out (0.25 s) and reappears at the start position** (no fade if Pause is 0); easing; appear after; stop after (max 30 s). Movement size = % of the banner's shorter side. Hide when: hover or touch (default), touch or click, never. Ripple (off by default), label, optional in backup. Presets: Tap, Swipe, Swipe up and down, Scratch, Drag, Peel, Rotate, Hover; the Components panel shows **one "Gesture" card** (presets in the settings dropdown). Never captures the pointer.
 
 ## 8. Delivery workflow and pitfalls
 
-- Larger changes come as **bash update scripts inside an HTML artifact** (script in a textarea, Download/Copy buttons, "✔ Complete" check on the last line `exit $STATUS`). Small fixes come as a `cat > .bannr-fix.cjs` Node patch pasted into Git Bash.
+- Larger changes come as **bash update scripts inside an HTML artifact** (script in a textarea, Download/Copy buttons, "✔ Complete" check on the last line `exit $STATUS`). Small fixes come as a `cat > .bannr-fix.cjs` Node patch (or a `node -e` one-liner) pasted into Git Bash.
 - **Artifact rules:**
   - The chat splits text at a literal HTML doctype line, so long scripts must go in an artifact, never in a markdown code block.
-  - **Never put triple backticks inside an artifact**; they end the outer code block and leave the artifact blank. (That is why the first version of this note was blank.)
+  - **Never put triple backticks inside an artifact**; they end the outer code block and leave the artifact blank.
   - A raw closing script tag inside a script element breaks the artifact: write it as `<\/script>` in TS strings, and HTML-escape the ampersand and less-than characters inside the textarea.
   - Very large artifacts can come out blank: split into parts and keep the payload in a textarea.
 - **Patches** use exact find/replace pairs, are skipped if already applied, and fail loudly if the text isn't found.
-- **Tests:** count elements by their **own attributes** (`data-*`), not by shared class names; use made-up names like `not-a-component` for "unknown" cases; account for Fit zoom when dragging.
+- **Tests:**
+  - Count elements by their **own attributes** (`data-*`), not by shared class names.
+  - Use made-up names like `not-a-component` for "unknown" cases.
+  - Account for Fit zoom when dragging in browser tests.
+  - Work out expected pixel values from the settings: e.g. Gesture Movement size 40% on a 300×250 banner = 100 px total = 50 px each way (not 40 px).
 - **Line endings:** Windows CRLF breaks bash. Downloading avoids it; when pasting, set VS Code to LF.
 
 ## 9. Open items / backlog
@@ -131,4 +135,4 @@ Shared runtime (`bannr.*`): `gesture` (tap = under 10 px and 300 ms; a drag neve
 6. **Somplo / Motionblender reference:** the demo link (demo.somplo.com/demo/434232369) couldn't be opened. Match the Gesture and Peel motion from screenshots or a recording if needed.
 7. **UX ideas offered, not built:** drag a label to change its number; tabs (Design / Animation / Component); changed-setting markers; multi-layer editing; pinned settings; an "Arrange ▾" menu to shorten the toolbar.
 8. **Small open choices:** Space on a focused checkbox toggles the mode (could tick it instead); Timeline/Preview labels still say "Loop"; no on/off for idle motion on Cube, Orbit, Panorama etc.; other components still show separate preset cards; a full-banner Lead Form covers the click layer.
-9. **Known limitations:** no dragging layers inside a Carousel Set (fields only); group contents not individually selectable; px bounce heights and slide distances aren't scaled for other sizes; an outside stroke on a full-banner layer is cut off (use the banner border); reduced motion isn't applied to entrance, emphasis and exit; the backup image is the final frame and 3D is drawn flat there.
+9. **Known limitations:** no dragging layers inside a Carousel Set (fields only); group contents not individually selectable; px bounce heights and slide distances aren't scaled for other sizes; an outside stroke on a full-banner layer is cut off (use the banner border); reduced motion isn't applied to entrance, emphasis and exit; the backup image is the final frame and 3D is drawn flat there; selecting layers under a full-banner Gesture needs the Gesture locked (or use the Layers panel).
