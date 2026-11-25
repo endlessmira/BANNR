@@ -86,7 +86,7 @@ export interface ComponentDefinition {
   /** Shown as a warning in the component settings (e.g. data collection). */
   notice?: string;
   /** Extra checklist issues for this component (e.g. required settings). */
-  validate?(props: ResolvedProps): Array<{ ruleId: string; level: 'error' | 'warning'; message: string; detail?: string }>;
+  validate?(props: ResolvedProps, slots?: Readonly<Record<string, ReadonlyArray<{ kind: string }>>>): Array<{ ruleId: string; level: 'error' | 'warning'; message: string; detail?: string }>;
   /** Hosts this component may reference, exempt from the external-request check (e.g. a privacy link). */
   allowedHosts?(props: ResolvedProps): string[];
   emits: readonly string[];

@@ -46,7 +46,7 @@ export function componentChecks(size: Size): ValidationResult[] {
       const f = sizeFit(def, size.width, size.height);
       if (f.level === 'tight') out.push({ ruleId: 'component-size-fit', level: 'warning', message: `${name}: ${f.reason}`, detail: f.suggestion });
     }
-    if (def.validate) out.push(...def.validate(resolveProps(def, el.props, el.preset)));
+    if (def.validate) out.push(...def.validate(resolveProps(def, el.props, el.preset), el.slots));
     const fits = el.x >= -0.5 && el.y >= -0.5 && el.x + el.width <= size.width + 0.5 && el.y + el.height <= size.height + 0.5;
     if (top && !fits) {
       out.push({ ruleId: 'component-fit', level: 'warning', message: `${name} does not fit inside the banner, so part of it is cut off` });
