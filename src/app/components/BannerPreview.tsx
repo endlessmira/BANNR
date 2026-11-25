@@ -55,6 +55,9 @@ export function BannerPreview({
       if (isTestClickMessage(e.data)) onTestClick?.(e.data);
       else if (isTimeMessage(e.data)) playhead.set(e.data.ms);
       else if (isTrackMessage(e.data)) onTrack?.(e.data.name);
+      else if (typeof e.data === 'object' && e.data !== null && (e.data as { type?: unknown }).type === 'bannr:space') {
+        window.dispatchEvent(new Event('bannr:toggle-mode'));
+      }
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);

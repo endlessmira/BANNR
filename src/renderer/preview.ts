@@ -36,6 +36,9 @@ export const PREVIEW_HEAD_SHIM =
   'var last=-100;function tick(){var as=anims();if(as.length){var t=Number(as[0].currentTime)||0;' +
   `if(Math.abs(t-last)>=33){last=t;parent.postMessage({type:${jsString(TIME_MESSAGE)},ms:t},'*');}}requestAnimationFrame(tick);}` +
   'requestAnimationFrame(tick);' +
+  "document.addEventListener('keydown',function(e){var t=e.target,n=t&&t.tagName;" +
+  "if(e.code!=='Space'||e.repeat||e.ctrlKey||e.metaKey||e.altKey||(t&&t.isContentEditable)||n==='INPUT'||n==='TEXTAREA'||n==='SELECT')return;" +
+  "e.preventDefault();parent.postMessage({type:'bannr:space'},'*');});" +
   '})();<\/script>';
 
 /**

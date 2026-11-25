@@ -1,0 +1,13 @@
+/* Timeline: snap toggle, zoom, sideways scrolling with pinned layer names */
+.tl-head { align-items: center; min-width: 0; }
+.tl-total { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tl-time { flex: none; white-space: nowrap; }
+.tl-tools { flex: none; display: flex; align-items: center; gap: 4px; }
+.tl-tools .tb-sep { height: 16px; }
+.tl-snap { height: 24px; padding: 0 8px; border-radius: 5px; border: 1px solid var(--line); background: transparent;
+  color: var(--muted); font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; cursor: pointer; }
+.tl-snap:hover { color: var(--text); }
+.tl-snap[aria-pressed="true"] { border-color: var(--amber); color: var(--amber); background: rgba(242,169,2,.1); }
+.tl-zoom { min-width: 48px; font-variant-numeric: tabular-nums; }
+.tl-body { overflow-x: auto; }
+.tl-names { position: sticky; left: 0; z-index: 4; background: var(--panel); }

@@ -1,4 +1,4 @@
-import { type PointerEvent as ReactPointerEvent, useEffect, useRef } from 'react';
+import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ANIMATION_PRESETS, animationEnd, totalSeconds } from '@/model/animation';
 import type { ID, Size } from '@/model/types';
 import type { EditorMode } from '../EditorHeader';
@@ -7,13 +7,26 @@ import { stackOrder } from '../layers';
 import { mutateSize } from '../mutate';
 import { findElement } from '../ops';
 import { useEditorStore } from '../store/editorStore';
-import { type Span, playheadPosition, rulerTicks, seekMs, snapTime, timelineRow } from './model';
+import {
+  MAX_ZOOM, SNAP_STEP, type Span, clampZoom, nextZoom, playheadPosition, prevZoom, rulerTicks, seekMs, snapTime, timelineRow,
+} from './model';
 import { usePlayhead } from './playhead';
 
 const PRESET_LABEL = new Map(ANIMATION_PRESETS);
 const fmtS = (n: number): string => `${Math.round(n * 100) / 100} s`;
 const BAR_LABEL_MIN_PX = 44;
+/** Width of the layer-name column (see .tl-names in timeline.css). */
+const NAMES = 150;
+const SNAP_KEY = 'bannr:timelineSnap';
 let gestureSeq = 0;
+
+function readSnap(): boolean {
+  try {
+    return localStorage.getItem(SNAP_KEY) !== '0';
+  } catch {
+    return true;
+  }
+}
 
 /** Sets an entrance/exit delay. One drag = one undo step (shared coalesce key). */
 function setDelay(id: ID, phase: 'in' | 'out', delay: number, key: string): void {
@@ -32,19 +45,80 @@ export function Timeline({ size, mode, onSeek }: Props) {
   const select = useEditorStore((s) => s.select);
   const settings = useEditorStore((s) => s.project?.settings);
   const ms = usePlayhead();
-  const [trackRef, track] = useElementSize<HTMLDivElement>();
+  const [snap, setSnapState] = useState(readSnap);
+  const [zoom, setZoom] = useState(1);
+  const [setBody, body] = useElementSize<HTMLDivElement>();
+  const bodyEl = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useCallback((n: HTMLDivElement | null) => { bodyEl.current = n; setBody(n); }, [setBody]);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const pending = useRef<{ t: number; off: number } | null>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => () => cleanupRef.current?.(), []);
 
   const a = size.animationSettings;
   const loop = a.duration > 0 ? a.duration : 1;
   const plays = Math.max(1, Math.round(a.loops));
-  const pps = track.width > 0 ? track.width / loop : 0;
   const preview = mode === 'preview';
+  const base = Math.max(0, body.width - NAMES);
+  const pps = base > 0 ? (base * zoom) / loop : 0;
   const rows = stackOrder(size.elements).reverse().map((el) => timelineRow(el));
   const pos = playheadPosition(ms, a);
   const total = totalSeconds(a);
   const over = settings ? total > settings.maxAnimationSeconds + 1e-9 || a.loops > settings.maxLoops : false;
+
+  const setSnap = (v: boolean) => {
+    setSnapState(v);
+    try { localStorage.setItem(SNAP_KEY, v ? '1' : '0'); } catch { /* storage blocked */ }
+  };
+  /** Snap is on unless switched off; holding Alt flips it for one drag. */
+  const snapped = (t: number, alt: boolean): number => snapTime(t, snap !== alt ? SNAP_STEP : 0);
+
+  /** Zooms, keeping the moment under the pointer (or the middle of the view) in place. */
+  const zoomTo = (z: number, clientX?: number) => {
+    const nz = clampZoom(z);
+    const b = bodyEl.current;
+    if (b && pps > 0) {
+      const r = b.getBoundingClientRect();
+      const view = Math.max(0, b.clientWidth - NAMES);
+      const off = clientX === undefined ? view / 2 : Math.min(view, Math.max(0, clientX - r.left - NAMES));
+      pending.current = { t: (b.scrollLeft + off) / pps, off };
+    }
+    setZoom(nz);
+  };
+  const zoomRef = useRef(zoomTo);
+  zoomRef.current = zoomTo;
+  const zRef = useRef(zoom);
+  zRef.current = zoom;
+
+  useLayoutEffect(() => {
+    const b = bodyEl.current;
+    const p = pending.current;
+    if (!b || !p || pps <= 0) return;
+    pending.current = null;
+    b.scrollLeft = Math.max(0, p.t * pps - p.off);
+  }, [zoom, pps]);
+
+  // Ctrl/Cmd + mouse wheel zooms the timeline.
+  useEffect(() => {
+    const el = rootRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      zoomRef.current(zRef.current * (e.deltaY < 0 ? 1.25 : 0.8), e.clientX);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, []);
+
+  // While zoomed in Preview, keep the playhead in view.
+  useEffect(() => {
+    const b = bodyEl.current;
+    if (!preview || zoom <= 1 || !b || pps <= 0) return;
+    const x = pos.t * pps;
+    const view = b.clientWidth - NAMES;
+    if (x < b.scrollLeft || x > b.scrollLeft + view - 20) b.scrollLeft = Math.max(0, x - view * 0.2);
+  }, [preview, zoom, pps, pos.t]);
 
   const drag = (onMove: (ev: PointerEvent) => void) => {
     cleanupRef.current?.();
@@ -65,9 +139,9 @@ export function Timeline({ size, mode, onSeek }: Props) {
     const rect = e.currentTarget.getBoundingClientRect();
     if (rect.width <= 0) return;
     const play = pos.play;
-    const seekAt = (x: number) => onSeek(seekMs(((x - rect.left) / rect.width) * loop, a, play));
-    seekAt(e.clientX);
-    drag((ev) => seekAt(ev.clientX));
+    const seekAt = (x: number, alt: boolean) => onSeek(seekMs(snapped(((x - rect.left) / rect.width) * loop, alt), a, play));
+    seekAt(e.clientX, e.altKey);
+    drag((ev) => seekAt(ev.clientX, ev.altKey));
   };
 
   const onBarDown = (e: ReactPointerEvent<HTMLDivElement>, id: ID, phase: 'in' | 'out', span: Span, locked: boolean) => {
@@ -78,11 +152,11 @@ export function Timeline({ size, mode, onSeek }: Props) {
     e.preventDefault();
     const sx = e.clientX;
     const key = `tl:${id}:${phase}:${++gestureSeq}`;
-    drag((ev) => setDelay(id, phase, snapTime(span.start + (ev.clientX - sx) / pps), key));
+    drag((ev) => setDelay(id, phase, snapped(span.start + (ev.clientX - sx) / pps, ev.altKey), key));
   };
 
   return (
-    <div className="timeline" aria-label="Timeline">
+    <div className="timeline" aria-label="Timeline" ref={rootRef}>
       <div className="tl-head">
         <span className="tl-title">Timeline</span>
         <span className="tl-total" data-over={over}>
@@ -90,13 +164,30 @@ export function Timeline({ size, mode, onSeek }: Props) {
           {settings ? ` · limit ${settings.maxAnimationSeconds} s, ${settings.maxLoops} plays` : ''}
         </span>
         <span className="tl-time">
-          {preview ? `${fmtS(pos.t)} · play ${pos.play}/${plays}` : 'Drag bars to change delays · switch to Preview to scrub'}
+          {preview ? `${fmtS(pos.t)} · play ${pos.play}/${plays}` : 'Drag bars to change delays · Ctrl + scroll to zoom'}
         </span>
+        <div className="tl-tools">
+          <button
+            type="button"
+            className="tl-snap"
+            aria-pressed={snap}
+            title="Snap bars and the playhead to 0.1 s steps. Hold Alt while dragging to switch it for one drag."
+            onClick={() => setSnap(!snap)}
+          >
+            Snap 0.1 s
+          </button>
+          <span className="tb-sep" />
+          <button type="button" className="mini" aria-label="Zoom timeline out" disabled={zoom <= 1} onClick={() => zoomTo(prevZoom(zoom))}>−</button>
+          <button type="button" className="mini tl-zoom" aria-label="Timeline zoom" title="Reset zoom (Ctrl + scroll to zoom)" onClick={() => zoomTo(1)}>
+            {Math.round(zoom * 100)}%
+          </button>
+          <button type="button" className="mini" aria-label="Zoom timeline in" disabled={zoom >= MAX_ZOOM} onClick={() => zoomTo(nextZoom(zoom))}>+</button>
+        </div>
       </div>
       {rows.length === 0 ? (
         <p className="muted small tl-empty">No layers yet. Add one from the toolbar.</p>
       ) : (
-        <div className="tl-body">
+        <div className="tl-body" ref={bodyRef}>
           <div className="tl-names">
             <div className="tl-corner" />
             {rows.map((r) => (
@@ -106,10 +197,10 @@ export function Timeline({ size, mode, onSeek }: Props) {
               </button>
             ))}
           </div>
-          <div className="tl-right" ref={trackRef}>
+          <div className="tl-right" style={base > 0 ? { width: base * zoom, flex: 'none' } : undefined}>
             <div className="tl-ruler" data-scrub={preview} onPointerDown={onRulerDown}
               title={preview ? 'Click or drag to jump to a moment' : 'Switch to Preview to scrub'}>
-              {rulerTicks(loop).map((t) => <span key={t} className="tl-tick" style={{ left: t * pps }}>{t}</span>)}
+              {rulerTicks(loop, pps).map((t) => <span key={t} className="tl-tick" style={{ left: t * pps }}>{t}</span>)}
             </div>
             {rows.map((r) => (
               <div key={r.id} className="tl-track" data-selected={selection.includes(r.id)} data-hidden={r.hidden}>

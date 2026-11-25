@@ -1,4 +1,4 @@
-import { type CSSProperties, type DragEvent, type ReactNode, useCallback, useState } from 'react';
+import { type CSSProperties, type DragEvent, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { BannerPreview, type PlayState, type SeekRequest } from '@/app/components/BannerPreview';
 import { ExportDialog } from '@/export/ExportDialog';
 import { KbCounter } from '@/export/KbCounter';
@@ -88,6 +88,27 @@ export function EditorView({ onExit }: { onExit: () => void }) {
     }
   }, [restart]);
 
+  // Space switches between Edit and Preview / Interact, unless the user is typing or a dialog is open.
+  useEffect(() => {
+    const typing = (t: EventTarget | null): boolean =>
+      t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
+    const toggle = () => changeMode(mode === 'edit' ? 'preview' : 'edit');
+    const onKey = (e: KeyboardEvent) => {
+      if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
+      if (document.querySelector('.modal-backdrop')) return;
+      e.preventDefault();
+      const a = document.activeElement;
+      if (a instanceof HTMLElement && a.tagName === 'BUTTON') a.blur();
+      toggle();
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('bannr:toggle-mode', toggle);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('bannr:toggle-mode', toggle);
+    };
+  }, [mode, changeMode]);
+
   const size = project ? findSize(project, activeSizeId) : undefined;
   if (!project || !size) return null;
 
@@ -147,6 +168,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
               <div><kbd>Ctrl/Cmd</kbd>+<kbd>]</kbd> <kbd>[</kbd> forward / backward</div>
               <div><kbd>Ctrl/Cmd</kbd>+<kbd>Z</kbd> undo · +<kbd>Shift</kbd> redo</div>
               <div><kbd>Del</kbd> delete · <kbd>Esc</kbd> deselect</div>
+              <div><kbd>Space</kbd> Edit ⇄ Preview / Interact</div>
             </div>
           </details>
         </aside>

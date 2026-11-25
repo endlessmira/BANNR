@@ -31,3 +31,17 @@ body.rp-resizing iframe { pointer-events: none; }
 
 /* The toolbar wraps instead of being cut off when the canvas is narrow */
 .toolbar { flex-wrap: wrap; justify-content: center; max-width: calc(100% - 24px); white-space: normal; }
+
+/* Fixes: search marker, compact opacity field, no sideways scrolling */
+.psec[data-sq-hide], .psec [data-sq-hide] { display: none !important; }
+.panel-right { overflow-x: hidden; }
+.psec-body > *, .grp-body > *, .grp-item-body > * { min-width: 0; }
+.panel-right input, .panel-right select, .panel-right textarea { min-width: 0; max-width: 100%; }
+.panel-right .cf-wrap { grid-template-columns: minmax(0, 1fr) 90px; }
+.panel-right .cf-wrap .nf > span { min-width: 0; flex: none; }
+.panel-right .cf-wrap .nf input { width: 100%; }
+
+/* Toolbar: always one row. Width = its buttons; scrolls sideways only if the canvas is narrower. */
+.toolbar { flex-wrap: nowrap; white-space: nowrap; width: max-content; max-width: calc(100% - 24px);
+  overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; }
+.toolbar > * { flex: none; }

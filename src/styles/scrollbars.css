@@ -1,0 +1,8 @@
+/* Scrollbars in the app's colours (editor only; exported banners are not affected) */
+* { scrollbar-width: thin; scrollbar-color: #3a3a42 transparent; }
+.panel:hover, .tl-body:hover, .stage:hover, .comp-panel:hover, .modal:hover, .checklist:hover,
+.export-report:hover, .toolbar:hover, .tpl-grid:hover { scrollbar-color: rgba(242,169,2,.6) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track, ::-webkit-scrollbar-corner { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3a3a42; border: 2px solid transparent; border-radius: 999px; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover { background: #f2a902; background-clip: padding-box; }

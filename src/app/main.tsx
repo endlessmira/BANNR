@@ -16,6 +16,8 @@ import '@/styles/color.css';
 import '@/styles/carouselset.css';
 import '@/styles/fit.css';
 import '@/styles/props-wide.css';
+import '@/styles/timeline-zoom.css';
+import '@/styles/scrollbars.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root element missing');

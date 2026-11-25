@@ -8,6 +8,7 @@ test('errors block export; platform and limits can be changed in the Export dial
 
   await page.locator('.stage').click({ position: { x: 8, y: 300 } }); // empty area: deselect
   await expect(page.locator('.props-title')).toHaveText('Banner 480×480');
+  await page.getByLabel('Repeat animation').check();
   await page.getByRole('spinbutton', { name: 'Plays', exact: true }).fill('4');
 
   await page.getByRole('button', { name: 'Export', exact: true }).click();

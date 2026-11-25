@@ -101,11 +101,24 @@ export function LoopSettings({ size }: { size: Size }) {
   return (
     <Section title="Animation timing">
       <div className="grid2">
-        <NumberField label="Loop" ariaLabel="Loop duration" suffix="s" min={0.5} max={120} step={0.5} value={a.duration}
+        <NumberField label="Length" ariaLabel="Animation length" suffix="s" min={0.5} max={120} step={0.5} value={a.duration}
           onChange={(v) => edit('loop', (s) => { s.animationSettings.duration = v; })} />
-        <NumberField label="Plays" min={1} max={10} value={a.loops}
-          onChange={(v) => edit('plays', (s) => { s.animationSettings.loops = Math.max(1, Math.round(v)); })} />
+        {a.loops > 1 && (
+          <NumberField label="Plays" min={2} max={10} value={a.loops}
+            onChange={(v) => edit('plays', (s) => { s.animationSettings.loops = Math.max(2, Math.round(v)); })} />
+        )}
       </div>
+      <label className="check">
+        <input
+          type="checkbox"
+          checked={a.loops > 1}
+          onChange={(e) => {
+            const on = e.target.checked;
+            edit('repeat', (s) => { s.animationSettings.loops = on ? 2 : 1; });
+          }}
+        />
+        Repeat animation
+      </label>
       <p className="muted small">
         Total {fmtS(totalSeconds(a))} · animations end at {fmtS(end)}
         {settings ? ` · limit ${settings.maxAnimationSeconds} s, ${settings.maxLoops} plays` : ''}

@@ -33,7 +33,20 @@ export function playheadPosition(ms: number, a: AnimationSettings): PlayheadPos 
   return { t: s % loop, play: Math.floor(s / loop) + 1, done: false };
 }
 
-export function tickStep(loop: number): number {
+/** Snap grid for the bars and the playhead, in seconds. */
+export const SNAP_STEP = 0.1;
+/** Zoom levels of the timeline (1 = the whole loop fits). */
+export const ZOOMS: readonly number[] = [1, 1.5, 2, 3, 4, 6, 8];
+export const MAX_ZOOM = 8;
+export const clampZoom = (z: number): number => Math.min(MAX_ZOOM, Math.max(1, Math.round(z * 100) / 100));
+export const nextZoom = (z: number): number => ZOOMS.find((x) => x > z + EPS) ?? MAX_ZOOM;
+export const prevZoom = (z: number): number => [...ZOOMS].reverse().find((x) => x < z - EPS) ?? 1;
+
+const TICK_STEPS: readonly number[] = [0.1, 0.25, 0.5, 1, 2, 5, 10];
+
+/** Ruler step: by loop length, or (when pixels per second are known) the finest step with about 44 px between labels. */
+export function tickStep(loop: number, pps?: number): number {
+  if (pps !== undefined && pps > 0) return TICK_STEPS.find((s) => s * pps >= 44) ?? 10;
   if (loop <= 2) return 0.25;
   if (loop <= 5) return 0.5;
   if (loop <= 15) return 1;
@@ -41,15 +54,18 @@ export function tickStep(loop: number): number {
   return 10;
 }
 
-export function rulerTicks(loop: number): number[] {
-  const step = tickStep(loop);
+export function rulerTicks(loop: number, pps?: number): number[] {
+  const step = tickStep(loop, pps);
   const out: number[] = [];
   for (let i = 0; i * step <= loop + EPS; i++) out.push(Math.round(i * step * 100) / 100);
   return out;
 }
 
-/** Snaps to 0.05 s steps, never negative. */
-export const snapTime = (t: number): number => Math.max(0, Math.round(t * 20) / 20);
+/** Snaps to `step` seconds (0 = free, 0.01 s precision), never negative. */
+export function snapTime(t: number, step: number = SNAP_STEP): number {
+  const s = step > 0 ? step : 0.01;
+  return Math.max(0, Math.round(Math.round(t / s) * s * 1000) / 1000);
+}
 
 /** Where to seek (ms) for loop time t, staying within the current play. */
 export function seekMs(t: number, a: AnimationSettings, currentPlay: number): number {

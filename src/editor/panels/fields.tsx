@@ -53,10 +53,10 @@ export function Section({ title, children }: { title: string; children: ReactNod
     for (const c of kids) {
       const labels = Array.from(c.querySelectorAll('[aria-label]')).map((e) => e.getAttribute('aria-label') ?? '').join(' ');
       const hit = titleHit || `${c.textContent ?? ''} ${labels}`.toLowerCase().includes(q);
-      (c as HTMLElement).hidden = !hit;
+      c.toggleAttribute('data-sq-hide', !hit);
       if (hit) any = true;
     }
-    root.hidden = !any;
+    root.toggleAttribute('data-sq-hide', !any);
   });
   const toggle = () => {
     if (open) closedSections.add(title);
