@@ -4,7 +4,14 @@ export interface ZipEntry { path: string; bytes: number; text?: string }
 export interface ZipManifest { entries: ZipEntry[]; totalBytes: number }
 
 export type ValidationLevel = 'error' | 'warning' | 'pass';
-export interface ValidationResult { ruleId: string; level: ValidationLevel; message: string; detail?: string }
+export interface ValidationResult {
+  ruleId: string;
+  level: ValidationLevel;
+  message: string;
+  detail?: string;
+  /** false = shown as a red error, but export is still allowed. */
+  blocks?: boolean;
+}
 
 export interface PlatformConstraints {
   /** Hard limit: over this blocks export. */

@@ -18,7 +18,19 @@ const BAR_LABEL_MIN_PX = 44;
 /** Width of the layer-name column (see .tl-names in timeline.css). */
 const NAMES = 150;
 const SNAP_KEY = 'bannr:timelineSnap';
+/** Step while Shift is held, in seconds. */
+const SHIFT_STEP = 0.5;
 let gestureSeq = 0;
+const ROW_H = 24;
+/** Ruler (20 px) + room for the sideways scrollbar (10 px). */
+const TL_EXTRA = 30;
+const MIN_ROWS = 5;
+const MAX_ROWS = 8;
+const ROWS_KEY = 'bannr:timelineRows';
+const clampRows = (n: number): number => Math.min(MAX_ROWS, Math.max(MIN_ROWS, Math.round(n)));
+function readRows(): number {
+  try { return clampRows(Number(localStorage.getItem(ROWS_KEY)) || MIN_ROWS); } catch { return MIN_ROWS; }
+}
 
 function readSnap(): boolean {
   try {
@@ -47,6 +59,28 @@ export function Timeline({ size, mode, onSeek }: Props) {
   const ms = usePlayhead();
   const [snap, setSnapState] = useState(readSnap);
   const [zoom, setZoom] = useState(1);
+  const [visRows, setVisRowsState] = useState(readRows);
+  const setVisRows = (n: number) => {
+    const v = clampRows(n);
+    setVisRowsState(v);
+    try { localStorage.setItem(ROWS_KEY, String(v)); } catch { /* storage blocked */ }
+  };
+  /** Drag the top edge: the height snaps to whole rows. */
+  const onResizeDown = (e: ReactPointerEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const y0 = e.clientY;
+    const h0 = TL_EXTRA + visRows * ROW_H;
+    document.body.classList.add('tl-resizing');
+    const move = (ev: PointerEvent) => setVisRows((h0 + (y0 - ev.clientY) - TL_EXTRA) / ROW_H);
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+      document.body.classList.remove('tl-resizing');
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
   const [setBody, body] = useElementSize<HTMLDivElement>();
   const bodyEl = useRef<HTMLDivElement | null>(null);
   const bodyRef = useCallback((n: HTMLDivElement | null) => { bodyEl.current = n; setBody(n); }, [setBody]);
@@ -71,7 +105,8 @@ export function Timeline({ size, mode, onSeek }: Props) {
     try { localStorage.setItem(SNAP_KEY, v ? '1' : '0'); } catch { /* storage blocked */ }
   };
   /** Snap is on unless switched off; holding Alt flips it for one drag. */
-  const snapped = (t: number, alt: boolean): number => snapTime(t, snap !== alt ? SNAP_STEP : 0);
+  const snapped = (t: number, alt: boolean, shift = false): number =>
+    snapTime(t, shift ? SHIFT_STEP : snap !== alt ? SNAP_STEP : 0);
 
   /** Zooms, keeping the moment under the pointer (or the middle of the view) in place. */
   const zoomTo = (z: number, clientX?: number) => {
@@ -139,9 +174,10 @@ export function Timeline({ size, mode, onSeek }: Props) {
     const rect = e.currentTarget.getBoundingClientRect();
     if (rect.width <= 0) return;
     const play = pos.play;
-    const seekAt = (x: number, alt: boolean) => onSeek(seekMs(snapped(((x - rect.left) / rect.width) * loop, alt), a, play));
-    seekAt(e.clientX, e.altKey);
-    drag((ev) => seekAt(ev.clientX, ev.altKey));
+    const seekAt = (x: number, alt: boolean, shift: boolean) =>
+      onSeek(seekMs(snapped(((x - rect.left) / rect.width) * loop, alt, shift), a, play));
+    seekAt(e.clientX, e.altKey, e.shiftKey);
+    drag((ev) => seekAt(ev.clientX, ev.altKey, ev.shiftKey));
   };
 
   const onBarDown = (e: ReactPointerEvent<HTMLDivElement>, id: ID, phase: 'in' | 'out', span: Span, locked: boolean) => {
@@ -152,11 +188,14 @@ export function Timeline({ size, mode, onSeek }: Props) {
     e.preventDefault();
     const sx = e.clientX;
     const key = `tl:${id}:${phase}:${++gestureSeq}`;
-    drag((ev) => setDelay(id, phase, snapped(span.start + (ev.clientX - sx) / pps, ev.altKey), key));
+    drag((ev) => setDelay(id, phase, snapped(span.start + (ev.clientX - sx) / pps, ev.altKey, ev.shiftKey), key));
   };
 
   return (
     <div className="timeline" aria-label="Timeline" ref={rootRef}>
+      <div className="tl-resize" role="separator" aria-orientation="horizontal" aria-label="Resize the timeline"
+        title="Drag to resize (snaps to rows, up to 8) · double-click to reset"
+        onPointerDown={onResizeDown} onDoubleClick={() => setVisRows(MIN_ROWS)} />
       <div className="tl-head">
         <span className="tl-title">Timeline</span>
         <span className="tl-total" data-over={over}>
@@ -164,17 +203,17 @@ export function Timeline({ size, mode, onSeek }: Props) {
           {settings ? ` · limit ${settings.maxAnimationSeconds} s, ${settings.maxLoops} plays` : ''}
         </span>
         <span className="tl-time">
-          {preview ? `${fmtS(pos.t)} · play ${pos.play}/${plays}` : 'Drag bars to change delays · Ctrl + scroll to zoom'}
+          {preview ? `${fmtS(pos.t)} · play ${pos.play}/${plays}` : 'Drag bars to change delays · Shift = 0.5 s · Ctrl + scroll to zoom'}
         </span>
         <div className="tl-tools">
           <button
             type="button"
             className="tl-snap"
             aria-pressed={snap}
-            title="Snap bars and the playhead to 0.1 s steps. Hold Alt while dragging to switch it for one drag."
+            title="Snap to 0.1 s steps. Hold Shift while dragging for 0.5 s steps, or Alt to switch snapping for one drag."
             onClick={() => setSnap(!snap)}
           >
-            Snap 0.1 s
+            Snap
           </button>
           <span className="tb-sep" />
           <button type="button" className="mini" aria-label="Zoom timeline out" disabled={zoom <= 1} onClick={() => zoomTo(prevZoom(zoom))}>−</button>
@@ -187,7 +226,7 @@ export function Timeline({ size, mode, onSeek }: Props) {
       {rows.length === 0 ? (
         <p className="muted small tl-empty">No layers yet. Add one from the toolbar.</p>
       ) : (
-        <div className="tl-body" ref={bodyRef}>
+        <div className="tl-body" ref={bodyRef} style={{ height: TL_EXTRA + visRows * ROW_H }}>
           <div className="tl-names">
             <div className="tl-corner" />
             {rows.map((r) => (

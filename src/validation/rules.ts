@@ -75,7 +75,7 @@ export function runChecks(input: CheckInput): ValidationResult[] {
     : res('index-html', 'error', 'index.html is missing from the zip root'));
 
   out.push(kb > c.maxZipKB
-    ? res('zip-size', 'error', `The zip is ${kb} KB, over the ${label} limit of ${c.maxZipKB} KB`)
+    ? { ...res('zip-size', 'error', `The zip is ${kb} KB, over the ${label} limit of ${c.maxZipKB} KB. You can still export, but ${label} may reject the upload.`), blocks: false }
     : res('zip-size', 'pass', `The zip is ${kb} KB (${label} limit ${c.maxZipKB} KB)`));
   if (kb <= c.maxZipKB && kb > target) out.push(res('zip-target', 'warning', `The zip is ${kb} KB, over your ${target} KB target`));
   if (c.recommendedZipKB !== undefined && kb <= c.maxZipKB && kb > c.recommendedZipKB) {

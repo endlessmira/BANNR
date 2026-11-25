@@ -11,3 +11,10 @@
 .tl-zoom { min-width: 48px; font-variant-numeric: tabular-nums; }
 .tl-body { overflow-x: auto; }
 .tl-names { position: sticky; left: 0; z-index: 4; background: var(--panel); }
+
+/* Resizable timeline (top edge) */
+.timeline { position: relative; }
+.tl-resize { position: absolute; left: 0; right: 0; top: -4px; height: 8px; z-index: 6; cursor: ns-resize; }
+.tl-resize:hover, body.tl-resizing .tl-resize { background: linear-gradient(transparent 3px, rgba(242,169,2,.6) 3px, rgba(242,169,2,.6) 5px, transparent 5px); }
+body.tl-resizing { cursor: ns-resize; user-select: none; }
+body.tl-resizing iframe { pointer-events: none; }

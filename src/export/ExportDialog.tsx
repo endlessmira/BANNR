@@ -77,7 +77,8 @@ export function ExportDialog({ project, assetUrls, onClose }: Props) {
     return () => { cancelled = true; clearTimeout(timer); };
   }, [project, chosenKey]);
 
-  const errorCount = (checks ?? []).reduce((n, c) => n + c.results.filter((r) => r.level === 'error').length, 0);
+  const errorCount = (checks ?? []).reduce((n, c) => n + c.results.filter((r) => r.level === 'error' && r.blocks !== false).length, 0);
+  const softCount = (checks ?? []).reduce((n, c) => n + c.results.filter((r) => r.level === 'error' && r.blocks === false).length, 0);
   const blocked = busy !== null || checking || chosen.length === 0 || errorCount > 0;
 
   const toggle = (id: ID) =>
@@ -138,7 +139,7 @@ export function ExportDialog({ project, assetUrls, onClose }: Props) {
     ? 'Checking…'
     : errorCount > 0
       ? `${errorCount} error${errorCount === 1 ? '' : 's'} must be fixed before export`
-      : chosen.length === 0 ? 'Pick at least one size' : 'Ready to export';
+      : chosen.length === 0 ? 'Pick at least one size' : softCount > 0 ? 'Ready to export · over the size limit' : 'Ready to export';
 
   return (
     <div
@@ -197,7 +198,7 @@ export function ExportDialog({ project, assetUrls, onClose }: Props) {
         </fieldset>
 
         <section className="field">
-          <span>Checklist · <b className="check-status" data-errors={errorCount > 0}>{status}</b></span>
+          <span>Checklist · <b className="check-status" data-errors={errorCount + softCount > 0}>{status}</b></span>
           <div className="checklist">
             {(checks ?? []).map((c) => {
               const errs = c.results.filter((r) => r.level === 'error');
