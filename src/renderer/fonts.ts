@@ -6,7 +6,7 @@ export function collectFontFamilies(elements: readonly BannerElement[], out = ne
   for (const el of elements) {
     if (el.hidden) continue;
     if (el.type === 'text' || el.type === 'button') out.add(el.textStyle.fontFamily);
-    else if (el.type === 'component' && typeof el.props.fontFamily === 'string') out.add(el.props.fontFamily);
+    else if (el.type === 'component') collectPropFonts(el.props, out);
     else if (el.type === 'group') collectFontFamilies(el.children, out);
   }
   return out;
@@ -38,4 +38,18 @@ export function fontFaceCss(project: Project, families: Set<string>, resolveAsse
     }
   }
   return rules.join('\n');
+}
+
+/** Finds every "fontFamily" value in component settings, including nested items (slides, layers). */
+function collectPropFonts(v: unknown, out: Set<string>): void {
+  if (Array.isArray(v)) {
+    for (const x of v) collectPropFonts(x, out);
+    return;
+  }
+  if (v && typeof v === 'object') {
+    for (const [k, x] of Object.entries(v)) {
+      if (k === 'fontFamily' && typeof x === 'string') out.add(x);
+      else collectPropFonts(x, out);
+    }
+  }
 }

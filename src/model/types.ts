@@ -181,7 +181,9 @@ export interface GroupElement extends ElementBase {
 
 /** A value placed in a component slot. */
 export type SlotValue = { kind: 'image'; assetId: ID } | { kind: 'text'; text: string };
-export type ComponentPropValue = string | number | boolean | null | string[] | number[];
+/** A nested record, e.g. one slide of a Carousel Set. */
+export interface ComponentPropRecord { [key: string]: ComponentPropValue }
+export type ComponentPropValue = string | number | boolean | null | string[] | number[] | ComponentPropRecord[];
 
 /**
  * Interactive rich media element (Phase 7). Markup, settings schema and runtime come from the

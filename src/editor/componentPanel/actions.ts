@@ -11,29 +11,23 @@ export function canRotate(el: BannerElement): boolean {
 }
 
 /**
- * Adds a component at its default size (never below its minimum, never larger than the banner),
- * centred on `center` (banner pixels) or on the banner. Background components (addAsBackground)
- * fill the banner and go to the bottom of the stack. One undo step; the new layer is selected.
+ * Adds a component that FILLS the banner it is added to (any size, including the 480×480 master).
+ * Background components (addAsBackground) go to the bottom of the stack, all others on top.
+ * The drop point is not used: components always fill. One undo step; the new layer is selected.
  */
-export function addComponent(type: string, presetId?: string, center?: { x: number; y: number }): ID | null {
+export function addComponent(type: string, presetId?: string, _at?: { x: number; y: number }): ID | null {
   const st = useEditorStore.getState();
   const size = st.project ? findSize(st.project, st.activeSizeId) : undefined;
   const def = getComponent(type);
   if (!size || !def) return null;
   const preset = presetId ? def.presets?.find((p) => p.id === presetId) : undefined;
   const bg = def.addAsBackground === true;
-  const w = bg ? size.width : Math.max(def.minSize.width, Math.min(def.defaultSize.width, size.width));
-  const h = bg ? size.height : Math.max(def.minSize.height, Math.min(def.defaultSize.height, size.height));
-  const cx = center?.x ?? size.width / 2;
-  const cy = center?.y ?? size.height / 2;
-  const x = bg ? 0 : Math.round(Math.min(Math.max(0, cx - w / 2), Math.max(0, size.width - w)));
-  const y = bg ? 0 : Math.round(Math.min(Math.max(0, cy - h / 2), Math.max(0, size.height - h)));
   const z = bg
     ? Math.min(0, ...size.elements.map((e) => e.zIndex))
     : size.elements.reduce((m, e) => Math.max(m, e.zIndex), 0) + 1;
   const el = createComponent({
     componentType: def.type, componentVersion: def.version, preset: preset?.id,
-    name: preset?.label ?? def.label, x, y, width: w, height: h, zIndex: z,
+    name: preset?.label ?? def.label, x: 0, y: 0, width: size.width, height: size.height, zIndex: z,
   });
   st.update((d) => mutateSize(d, size.id, (s) => {
     if (bg) s.elements.unshift(el);
@@ -41,6 +35,20 @@ export function addComponent(type: string, presetId?: string, center?: { x: numb
   }));
   useEditorStore.getState().select([el.id]);
   return el.id;
+}
+
+/** Moves a layer to the top-left corner and makes it the size of the banner (one undo step). */
+export function fitToBanner(id: ID): void {
+  const { activeSizeId, update } = useEditorStore.getState();
+  if (!activeSizeId) return;
+  update((d) => mutateSize(d, activeSizeId, (s) => {
+    const el = s.elements.find((e) => e.id === id);
+    if (!el) return;
+    el.x = 0;
+    el.y = 0;
+    el.width = s.width;
+    el.height = s.height;
+  }));
 }
 
 /** Each field has its own coalesce key, so typing or dragging a slider is one undo step. */

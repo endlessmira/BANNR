@@ -62,7 +62,7 @@ export function scaleContent(el: BannerElement, s: number): void {
 }
 
 const isBackgroundLike = (el: BannerElement, from: Dimensions): boolean =>
-  (el.type === 'image' || (el.type === 'shape' && el.shape === 'rect')) &&
+  (el.type === 'image' || el.type === 'component' || (el.type === 'shape' && el.shape === 'rect')) &&
   el.width >= from.width * FILL_RATIO &&
   el.height >= from.height * FILL_RATIO;
 

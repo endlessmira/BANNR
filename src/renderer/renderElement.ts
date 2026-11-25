@@ -92,7 +92,7 @@ function renderComponent(el: ComponentElement, ctx: RenderContext, id: string, f
   ctx.components.add(def.type);
   const props = resolveProps(def, el.props, el.preset);
   const slots = resolveSlots(def, el.slots, ctx.resolveAsset);
-  const rctx = { id, sel: `#${id}`, width: el.width, height: el.height };
+  const rctx = { id, sel: `#${id}`, width: el.width, height: el.height, asset: ctx.resolveAsset };
   const out = ctx.componentMode === 'backup' ? def.backupState(props, slots, rctx) : def.render(props, slots, rctx);
   ctx.css.push(rule(`#${id}`, { ...frame, ...(def.category === '3d' ? { rotate: undefined } : {}), overflow: 'hidden' }));
   if (out.css) ctx.css.push(out.css);

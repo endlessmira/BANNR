@@ -1,12 +1,21 @@
 import type { ComponentElement } from '@/model/types';
 import { safeColor } from '@/renderer/css';
-import type { ComponentDefinition, PropValue, ResolvedProps, ResolvedSlot, ResolvedSlots, SettingField } from './types';
+import type {
+  ComponentDefinition, PropValue, ResolvedItem, ResolvedProps, ResolvedSlot, ResolvedSlots, SettingField, SettingsSchema,
+} from './types';
 
-export function defaultProps(def: ComponentDefinition): ResolvedProps {
-  const out: ResolvedProps = {};
-  for (const [k, f] of Object.entries(def.settingsSchema)) out[k] = f.default;
+const has = (o: object, k: string): boolean => Object.prototype.hasOwnProperty.call(o, k);
+
+/** One group item: every sub-setting present and valid. */
+export function resolveItem(schema: SettingsSchema, raw: unknown): ResolvedItem {
+  const r = raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : {};
+  const out: ResolvedItem = {};
+  for (const [k, f] of Object.entries(schema)) out[k] = coerce(f, has(r, k) ? r[k] : f.default);
   return out;
 }
+
+/** A new group item with every sub-setting at its default. */
+export const defaultItem = (schema: SettingsSchema): ResolvedItem => resolveItem(schema, {});
 
 /** Turns any stored value into a valid value for this field, or the field's default. */
 export function coerce(f: SettingField, v: unknown): PropValue {
@@ -31,11 +40,25 @@ export function coerce(f: SettingField, v: unknown): PropValue {
       return typeof v === 'string' && v.trim() !== '' ? v : f.default;
     case 'date':
       return typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : f.default;
+    case 'image':
+      return typeof v === 'string' ? v : f.default;
+    case 'group': {
+      const src: readonly unknown[] = Array.isArray(v) ? v : f.default;
+      const items = src.slice(0, f.max).map((it) => resolveItem(f.fields, it));
+      while (items.length < f.min) items.push(resolveItem(f.fields, f.default[items.length] ?? {}));
+      return items;
+    }
     default: {
       const never: never = f;
       return never;
     }
   }
+}
+
+export function defaultProps(def: ComponentDefinition): ResolvedProps {
+  const out: ResolvedProps = {};
+  for (const [k, f] of Object.entries(def.settingsSchema)) out[k] = coerce(f, f.default);
+  return out;
 }
 
 export function presetProps(def: ComponentDefinition, presetId?: string): Readonly<Record<string, PropValue>> {
@@ -46,21 +69,31 @@ export function presetProps(def: ComponentDefinition, presetId?: string): Readon
 export function resolveProps(def: ComponentDefinition, raw: ComponentElement['props'], presetId?: string): ResolvedProps {
   const merged: Record<string, unknown> = { ...presetProps(def, presetId), ...raw };
   const out: ResolvedProps = {};
-  for (const [k, f] of Object.entries(def.settingsSchema)) {
-    out[k] = Object.prototype.hasOwnProperty.call(merged, k) ? coerce(f, merged[k]) : f.default;
-  }
+  for (const [k, f] of Object.entries(def.settingsSchema)) out[k] = coerce(f, has(merged, k) ? merged[k] : f.default);
   return out;
+}
+
+function fieldIssues(prefix: string, schema: SettingsSchema, out: string[]): void {
+  for (const [k, f] of Object.entries(schema)) {
+    const name = `${prefix}.${k}`;
+    if (f.when && !has(schema, f.when.key)) out.push(`${name}: "when" refers to an unknown setting`);
+    if (f.type === 'group') {
+      if (f.min > f.max) out.push(`${name}: min is greater than max`);
+      if (f.default.length > f.max) out.push(`${name}: more default items than allowed`);
+      fieldIssues(name, f.fields, out);
+      continue;
+    }
+    if (coerce(f, f.default) !== f.default) out.push(`${name}: the default is not a valid value`);
+    if ((f.type === 'number' || f.type === 'slider') && f.min !== undefined && f.max !== undefined && f.min > f.max) {
+      out.push(`${name}: min is greater than max`);
+    }
+  }
 }
 
 /** Problems in a component's own definition (unit-tested for every registered component). */
 export function schemaIssues(def: ComponentDefinition): string[] {
   const out: string[] = [];
-  for (const [k, f] of Object.entries(def.settingsSchema)) {
-    if (coerce(f, f.default) !== f.default) out.push(`${def.type}.${k}: the default is not a valid value`);
-    if ((f.type === 'number' || f.type === 'slider') && f.min !== undefined && f.max !== undefined && f.min > f.max) {
-      out.push(`${def.type}.${k}: min is greater than max`);
-    }
-  }
+  fieldIssues(def.type, def.settingsSchema, out);
   for (const p of def.presets ?? []) {
     for (const [k, v] of Object.entries(p.props)) {
       const f = def.settingsSchema[k];

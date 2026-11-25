@@ -1,6 +1,7 @@
 import { px, round, rule, safeColor } from '@/renderer/css';
 import { escapeHtml } from '@/renderer/escape';
 import { HINT_FIELD, TAP_FIELD, THREE_CSS, faceContent } from '../three';
+import { NAV_BCC, NAV_FIELDS, navCss } from '../nav';
 import type {
   ComponentDefinition, ComponentRenderCtx, ResolvedProps, ResolvedSlot, ResolvedSlots, SettingsSchema,
 } from '../types';
@@ -56,12 +57,10 @@ const SCHEMA: SettingsSchema = {
   },
   loop: { type: 'toggle', label: 'Loop (wrap around)', default: true, help: 'Double and Double Change need at least 3 products to loop.' },
   speed: { type: 'slider', label: 'Transition duration', default: 0.5, min: 0.2, max: 1.5, step: 0.1, suffix: 's' },
-  arrows: { type: 'toggle', label: 'Arrows', default: true },
-  dots: { type: 'toggle', label: 'Dots', default: true },
   itemScale: { type: 'slider', label: 'Product size', default: 80, min: 50, max: 100, step: 5, suffix: '%' },
   fit: { type: 'select', label: 'Image fit', default: 'contain', options: [['contain', 'Contain'], ['cover', 'Cover']] },
   bgColor: { type: 'color', label: 'Background colour', default: 'transparent' },
-  navColor: { type: 'color', label: 'Arrows and dots colour', default: '#111111' },
+  ...NAV_FIELDS,
   ...HINT_FIELD,
   ...TAP_FIELD,
 };
@@ -125,6 +124,7 @@ function output(p: ResolvedProps, slots: ResolvedSlots, ctx: ComponentRenderCtx,
     }),
     rule(`${ctx.sel} .bcc-c`, { width: `${scale}%`, height: `${scale}%` }),
     rule(`${ctx.sel} .bcc-pair .bcc-c`, { width: `${round(scale / 2)}%` }),
+    navCss(p, ctx.sel, NAV_BCC),
   ].join('\n');
   return {
     html: `<div class="bcc" data-style="${escapeHtml(style)}" data-d="${d}">${bg}<div class="bcc-track">${units}</div>${nav}${dots}</div>`,
@@ -243,7 +243,7 @@ export const carousel: ComponentDefinition = {
   ],
   capturesPointer: true,
   emits: ['interaction_start', 'slide_change'],
-  weightBudgetKB: 8,
+  weightBudgetKB: 10,
   styles:
     '.bcc{position:relative;width:100%;height:100%;overflow:hidden}' +
     '.bcc-track{position:absolute;inset:0;transform-style:preserve-3d}' +
