@@ -88,7 +88,7 @@ Skeleton (shown here unescaped; escape it when it goes into the artifact):
     set -euo pipefail
 
     # 1) Right folder?
-    if [ ! -f package.json ] || ! grep -q '"name": "bannr"' package.json || [ ! -d src/renderer ]; then
+    if [ ! -f package.json ] || ! grep -Eq '"name": *"bannr"' package.json || [ ! -d src/renderer ]; then
       echo "✖ Run this inside your bannr project folder." >&2; exit 1
     fi
     # 2) Previous step installed? (check a file the previous step created)

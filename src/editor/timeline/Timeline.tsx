@@ -13,7 +13,7 @@ import {
 import { usePlayhead } from './playhead';
 
 const PRESET_LABEL = new Map<string, string>([...ANIMATION_PRESETS, ...EMPHASIS_PRESETS]);
-const fmtS = (n: number): string => `${Math.round(n * 100) / 100} s`;
+const fmtS = (n: number): string => `${n.toFixed(1)} s`;
 const BAR_LABEL_MIN_PX = 44;
 /** Width of the layer-name column (see .tl-names in timeline.css). */
 const NAMES = 150;
@@ -199,7 +199,7 @@ export function Timeline({ size, mode, onSeek }: Props) {
       <div className="tl-head">
         <span className="tl-title">Timeline</span>
         <span className="tl-total" data-over={over}>
-          Loop {fmtS(a.duration)} × {plays} {plays === 1 ? 'play' : 'plays'} = {fmtS(total)} · animations end at {fmtS(animationEnd(size.elements))}
+          Animation {fmtS(a.duration)} × {plays} {plays === 1 ? 'play' : 'plays'} = {fmtS(total)} · animations end at {fmtS(animationEnd(size.elements))}
           {settings ? ` · limit ${settings.maxAnimationSeconds} s, ${settings.maxLoops} plays` : ''}
         </span>
         <span className="tl-time">
