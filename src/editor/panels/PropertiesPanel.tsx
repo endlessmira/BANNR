@@ -4,6 +4,7 @@ import type { UploadTarget } from '../assets';
 import { FontsDialog } from '../fonts/FontsDialog';
 import { fontOptions } from '../fonts/fontOptions';
 import { AnimationSection, LoopSettings } from './AnimationSection';
+import { ComponentSettings } from '../componentPanel/ComponentSettings';
 import { normalizeAngle } from '../geometry';
 import { mutateSize } from '../mutate';
 import { findElement, setFrame } from '../ops';
@@ -128,7 +129,7 @@ function ElementProperties({ el, onUpload }: { el: BannerElement; onUpload: OnUp
         {el.type !== 'group' && el.type !== 'component' && <BoxSections el={el} />}
         <AnimationSection el={el} />
         {el.type === 'component' && (
-          <p className="muted small">Component: {el.componentType}. Its settings arrive with the component library in Phase 7.</p>
+          <ComponentSettings el={el} />
         )}
         {el.type === 'group' && (
           <p className="muted small">Resizing a group scales its layers (not font sizes). Ungroup to edit layers individually.</p>

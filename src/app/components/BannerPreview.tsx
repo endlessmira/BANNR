@@ -4,7 +4,7 @@ import type { ID, Project } from '@/model/types';
 import { getSize, renderBanner } from '@/renderer';
 import { cssKeyframesEngine } from '@/renderer/animation/cssKeyframes';
 import {
-  ANIM_MESSAGE, type TestClickMessage, isTestClickMessage, isTimeMessage, previewInjection,
+  ANIM_MESSAGE, type TestClickMessage, isTestClickMessage, isTimeMessage, isTrackMessage, previewInjection,
 } from '@/renderer/preview';
 
 export type PlayState = 'playing' | 'paused';
@@ -16,6 +16,8 @@ interface Props {
   sizeId: ID;
   assetUrls: Record<ID, string>;
   onTestClick?: (msg: TestClickMessage) => void;
+  /** Called with the name of every bannr.track() event. */
+  onTrack?: (name: string) => void;
   playState?: PlayState;
   /** Changing this reloads the banner, restarting the animation. */
   restartKey?: number;
@@ -23,7 +25,7 @@ interface Props {
 }
 
 export function BannerPreview({
-  project, sizeId, assetUrls, onTestClick, playState = 'playing', restartKey = 0, seek = null,
+  project, sizeId, assetUrls, onTestClick, onTrack, playState = 'playing', restartKey = 0, seek = null,
 }: Props) {
   const ref = useRef<HTMLIFrameElement>(null);
   const stateRef = useRef<PlayState>(playState);
@@ -35,7 +37,7 @@ export function BannerPreview({
     () => renderBanner(project, sizeId, {
       resolveAsset: (id) => assetUrls[id] ?? '',
       animationEngine: cssKeyframesEngine,
-      injection: previewInjection(project, size),
+      injection: previewInjection(project, getSize(project, sizeId)),
     }).html,
     [project, sizeId, assetUrls],
   );
@@ -52,10 +54,11 @@ export function BannerPreview({
       if (e.source !== ref.current?.contentWindow) return; // only messages from our banner
       if (isTestClickMessage(e.data)) onTestClick?.(e.data);
       else if (isTimeMessage(e.data)) playhead.set(e.data.ms);
+      else if (isTrackMessage(e.data)) onTrack?.(e.data.name);
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [onTestClick]);
+  }, [onTestClick, onTrack]);
 
   return (
     <iframe

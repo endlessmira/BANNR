@@ -4,7 +4,7 @@ import { addAt, newProject } from './helpers';
 test('clicks pass through layers to bannr.exit(); the landing URL is optional', async ({ page }) => {
   await newProject(page);
   await addAt(page, 'Add text', 20, 20);
-  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview / Interact', exact: true }).click();
   const iframe = page.locator('.preview-frame');
   await expect(iframe).toBeVisible();
   const frame = await (await iframe.elementHandle())!.contentFrame();

@@ -17,7 +17,7 @@ test('timeline bars change delays and the ruler scrubs the preview', async ({ pa
     .poll(async () => Number(await page.getByLabel('Entrance delay', { exact: true }).inputValue()))
     .toBeGreaterThan(0);
 
-  await page.getByRole('button', { name: 'Preview', exact: true }).click();
+  await page.getByRole('button', { name: 'Preview / Interact', exact: true }).click();
   const frame = await (await page.locator('.preview-frame').elementHandle())!.contentFrame();
   const r = (await page.locator('.tl-ruler').boundingBox())!;
   await page.mouse.click(r.x + r.width / 2, r.y + r.height / 2); // middle of the 15 s loop

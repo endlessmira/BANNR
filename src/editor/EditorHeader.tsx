@@ -60,7 +60,7 @@ export function EditorHeader({ project, saveStatus, mode, onModeChange, onExit, 
         <button className="icon-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl/Cmd+Shift+Z)">↷</button>
         <div className="segmented">
           <button aria-pressed={mode === 'edit'} onClick={() => onModeChange('edit')}>Edit</button>
-          <button aria-pressed={mode === 'preview'} onClick={() => onModeChange('preview')}>Preview</button>
+          <button aria-pressed={mode === 'preview'} onClick={() => onModeChange('preview')} title="Play the banner and interact with components">Preview / Interact</button>
         </div>
         <span className="platform-badge" title="Target ad platform">{PLATFORM_LABELS[project.selectedPlatform]}</span>
         <button className="primary small-btn header-export" onClick={onExport} title="Download ad-server-ready zips">Export</button>

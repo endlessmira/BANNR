@@ -8,6 +8,7 @@ import {
   resizeFrame, rotationFromPointer, snapMove, snapTargetsFor, unionRect,
 } from '../geometry';
 import { type SizeMutator, mutateSize, previewSize } from '../mutate';
+import { canRotate } from '../componentPanel/actions';
 import { setFrame } from '../ops';
 import { useEditorStore } from '../store/editorStore';
 
@@ -256,6 +257,7 @@ export function EditorCanvas({ project, sizeId, assetUrls, zoom }: Props) {
         {single && (
           <div
             className="transformer"
+            data-norotate={!canRotate(single)}
             style={{
               left: single.x, top: single.y, width: single.width, height: single.height,
               transform: single.rotation ? `rotate(${single.rotation}deg)` : undefined,

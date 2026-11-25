@@ -16,9 +16,11 @@ interface Props {
   onZoomChange: (mode: ZoomMode) => void;
   selectionCount: number;
   onUpload: (files: File[]) => void;
+  componentsOpen: boolean;
+  onComponents: () => void;
 }
 
-export function Toolbar({ zoomMode, zoom, onZoomChange, selectionCount, onUpload }: Props) {
+export function Toolbar({ zoomMode, zoom, onZoomChange, selectionCount, onUpload, componentsOpen, onComponents }: Props) {
   const fileRef = useRef<HTMLInputElement>(null);
   const target = selectionCount === 1 ? ' to banner' : ' to selection';
   return (
@@ -43,6 +45,7 @@ export function Toolbar({ zoomMode, zoom, onZoomChange, selectionCount, onUpload
           if (files.length > 0) onUpload(files);
         }}
       />
+      <button className="tb-btn tb-comp" title="Add a component" aria-pressed={componentsOpen} onClick={onComponents}>✦ Components</button>
       <span className="tb-sep" />
       {ALIGN_BUTTONS.map(([mode, icon, label]) => (
         <button key={mode} className="tb-btn" title={label + target} disabled={selectionCount === 0} onClick={() => align(mode)}>

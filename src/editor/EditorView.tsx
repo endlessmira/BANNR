@@ -1,11 +1,13 @@
 import { type DragEvent, type ReactNode, useCallback, useState } from 'react';
 import { BannerPreview, type PlayState, type SeekRequest } from '@/app/components/BannerPreview';
+import { ExportDialog } from '@/export/ExportDialog';
+import { KbCounter } from '@/export/KbCounter';
 import type { BannerElement } from '@/model/types';
 import type { TestClickMessage } from '@/renderer/preview';
 import { type UploadTarget, uploadImages, useAssetUrls } from './assets';
-import { ExportDialog } from '@/export/ExportDialog';
-import { KbCounter } from '@/export/KbCounter';
 import { EditorCanvas } from './canvas/EditorCanvas';
+import { addComponent } from './componentPanel/actions';
+import { COMPONENT_DRAG_TYPE, ComponentsPanel } from './componentPanel/ComponentsPanel';
 import { type EditorMode, EditorHeader } from './EditorHeader';
 import { useDocumentFonts } from './fonts/useDocumentFonts';
 import { useAutosave } from './hooks/useAutosave';
@@ -47,7 +49,10 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const [restartKey, setRestartKey] = useState(0);
   const [seek, setSeek] = useState<SeekRequest | null>(null);
   const [exporting, setExporting] = useState(false);
+  const [componentsOpen, setComponentsOpen] = useState(false);
+  const [events, setEvents] = useState<string[]>([]);
   const onTestClick = useCallback((m: TestClickMessage) => setLastClick(m), []);
+  const onTrack = useCallback((name: string) => setEvents((ev) => [...ev, name].slice(-6)), []);
   const assetUrls = useAssetUrls(project);
   useDocumentFonts(project, assetUrls);
 
@@ -61,6 +66,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const restart = useCallback(() => {
     setPlayState('playing');
     setSeek(null);
+    setEvents([]);
     playhead.set(0);
     setRestartKey((k) => k + 1);
   }, []);
@@ -74,6 +80,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
     setMode(m);
     if (m === 'preview') {
       setLastClick(null);
+      setComponentsOpen(false);
       restart();
     }
   }, [restart]);
@@ -92,10 +99,28 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const editableCount = selected.filter((el) => !el.locked).length;
 
   const onDragOver = (e: DragEvent<HTMLElement>) => {
-    if (mode === 'edit' && e.dataTransfer.types.includes('Files')) e.preventDefault();
+    if (mode !== 'edit') return;
+    const types = e.dataTransfer.types;
+    if (types.includes('Files') || types.includes(COMPONENT_DRAG_TYPE)) e.preventDefault();
   };
   const onDrop = (e: DragEvent<HTMLElement>) => {
-    if (mode !== 'edit' || e.dataTransfer.files.length === 0) return;
+    if (mode !== 'edit') return;
+    const raw = e.dataTransfer.getData(COMPONENT_DRAG_TYPE);
+    if (raw) {
+      e.preventDefault();
+      try {
+        const d = JSON.parse(raw) as { type?: unknown; preset?: unknown };
+        if (typeof d.type === 'string') {
+          const r = document.querySelector('.canvas-overlay')?.getBoundingClientRect();
+          const at = r ? { x: (e.clientX - r.left) / zoom, y: (e.clientY - r.top) / zoom } : undefined;
+          addComponent(d.type, typeof d.preset === 'string' ? d.preset : undefined, at);
+        }
+      } catch {
+        // not a BANNR component drag
+      }
+      return;
+    }
+    if (e.dataTransfer.files.length === 0) return;
     e.preventDefault();
     onUpload([...e.dataTransfer.files]);
   };
@@ -124,6 +149,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
         </aside>
 
         <div className="center-col">
+          {mode === 'edit' && componentsOpen && <ComponentsPanel onClose={() => setComponentsOpen(false)} />}
           <section
             ref={stageRef}
             className="stage"
@@ -132,7 +158,15 @@ export function EditorView({ onExit }: { onExit: () => void }) {
             onDrop={onDrop}
           >
             {mode === 'edit' ? (
-              <Toolbar zoomMode={zoomMode} zoom={zoom} onZoomChange={setZoomMode} selectionCount={editableCount} onUpload={onUpload} />
+              <Toolbar
+                zoomMode={zoomMode}
+                zoom={zoom}
+                onZoomChange={setZoomMode}
+                selectionCount={editableCount}
+                onUpload={onUpload}
+                componentsOpen={componentsOpen}
+                onComponents={() => setComponentsOpen((o) => !o)}
+              />
             ) : (
               <PreviewControls
                 size={size}
@@ -150,6 +184,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
                   sizeId={size.id}
                   assetUrls={assetUrls}
                   onTestClick={onTestClick}
+                  onTrack={onTrack}
                   playState={playState}
                   restartKey={restartKey}
                   seek={seek}
@@ -158,7 +193,14 @@ export function EditorView({ onExit }: { onExit: () => void }) {
             </ZoomBox>
             <KbCounter project={project} sizeId={size.id} />
             {mode === 'preview' && lastClick && (
-              <div className="toast">{lastClick.url ? <>Test click → <code>{lastClick.url}</code> ({lastClick.target})</> : 'Test click: no landing URL yet. It will be set in the ad server or DSP.'}</div>
+              <div className="toast">
+                {lastClick.url
+                  ? <>Test click → <code>{lastClick.url}</code> ({lastClick.target})</>
+                  : 'Test click: no landing URL yet. It will be set in the ad server or DSP.'}
+              </div>
+            )}
+            {mode === 'preview' && events.length > 0 && (
+              <div className="events-log" aria-label="Tracked events">Events: {events.join(' · ')}</div>
             )}
             {notice && (
               <div className="toast toast-warn" role="alert">

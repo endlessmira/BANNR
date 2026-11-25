@@ -57,8 +57,8 @@ src/
 tests/e2e/         Playwright tests
 ```
 
-Planned in Phase 7: `src/components/[type]/` (one folder per component) and `src/runtime/`
-(the shared banner runtime).
+Components live in `src/components/[type]/` (one folder each, plus `registry.ts`), the shared
+banner runtime in `src/runtime/`, and the editor's component UI in `src/editor/componentPanel/`.
 
 ### Key ideas
 
@@ -140,32 +140,60 @@ export const myplatform: PlatformAdapter = {
 Notes: inside a TypeScript string, write closing script tags as `<\/script>` so the source stays
 safe to embed in HTML. Use `jsString()` for every value that goes into a script.
 
-## How to add a component (planned: Phase 7a)
+## How to add a component
 
-Components (cube, carousel, scratch, countdown…) are interactive layers. The framework arrives in
-Phase 7a; this section will be finalised then. The document already supports them: element type
-`component` with `componentType`, `componentVersion`, `preset`, `props` and `slots`
-(see `model/types.ts`). Until 7a, they render as placeholder boxes.
+Components are interactive layers (counter, cube, carousel, scratch…). Users add them from the
+**✦ Components** button; their settings panel is generated from the schema, and **Preview / Interact**
+runs them live.
 
-Each component will be one folder, `src/components/[type]/`, exporting a definition:
+1. Create `src/components/mything/index.ts` exporting a `ComponentDefinition`
+   (`src/components/types.ts`). `src/components/counter/` is a complete example.
+2. Register it in `src/components/registry.ts`.
+3. Run `npm run check`. The registry test validates every component's schema, presets, minimum size
+   and weight budget, and checks that its runtime never opens URLs itself.
+
+Minimal example:
 
 ```ts
-export const counter: ComponentDefinition = {
-  type: 'counter', version: 1, label: 'Counter', category: 'widget',
-  description: 'Animated number, e.g. "-50%"', icon: '123',
-  defaultSize: { width: 200, height: 80 }, minSize: { width: 80, height: 30 },
-  recommendedSizes: ['300x250', '300x600'],
-  settingsSchema: { end: { type: 'number', label: 'End value', default: 50 } },
-  slots: [], capturesPointer: false, emits: [], weightBudgetKB: 2,
-  render: (props) => ({ html: `<span class="n">${props.end}</span>`, css: '.n{font:700 40px Arial}' }),
-  runtime: '/* vanilla JS, no libraries, uses bannr.* helpers */',
-  backupState: (props) => ({ html: `<span class="n">${props.end}</span>`, css: '' }),
+import { escapeText } from '@/renderer/escape';
+import type { ComponentDefinition } from '../types';
+
+export const badge: ComponentDefinition = {
+  type: 'badge', version: 1, label: 'Badge', category: 'widget', icon: '★',
+  description: 'A round badge with a label.',
+  defaultSize: { width: 120, height: 120 }, minSize: { width: 40, height: 40 },
+  recommendedSizes: ['300x250'],
+  settingsSchema: {
+    text: { type: 'text', label: 'Label', default: 'NEW' },
+    color: { type: 'color', label: 'Color', default: '#f2a902' },
+  },
+  slots: [], capturesPointer: false, emits: ['badge_shown'], weightBudgetKB: 1,
+  styles: '.bb{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;font:700 20px Arial}',
+  render: (p, _slots, ctx) => ({
+    html: `<div class="bb">${escapeText(String(p.text))}</div>`,
+    css: `${ctx.sel} .bb{background:${p.color}}`, // colours are already sanitised by the schema
+  }),
+  runtime: "bannr.define('badge', function (el, props) { bannr.track('badge_shown'); return null; });",
+  backupState: (p, slots, ctx) => badge.render(p, slots, ctx),
 };
 ```
 
-Rules: vanilla JS and CSS only, no network requests (except the Lead Form), works with touch
-and mouse, stays within `weightBudgetKB`, opens URLs only via `bannr.exit()`, reports events via
-`bannr.track()`, and cleans up its listeners and timers.
+How it works:
+
+- The renderer outputs `<div data-component="badge" data-props="…">` with the `render()` markup.
+  The editor canvas shows that static markup; the backup image uses `backupState()`.
+- Preview and export add the shared runtime (`src/runtime/runtime.ts`) and the runtime of each
+  component type **used in that size**, once. `bannr.start()` then calls your `bannr.define`
+  factory with the element and its resolved props. Return `{ destroy }` to clean up.
+- `capturesPointer: true` gives the layer the `bannr-interactive` class, so it receives swipes and
+  drags instead of the click layer below it. Use `bannr.gesture(el, { move, end, tap }, { tapToExit })`:
+  a drag never exits, a tap calls `bannr.exit()` unless your `tap` returns `true`.
+- Other helpers: `bannr.loop(step)` (requestAnimationFrame, pauses when hidden), `bannr.hint(el)`,
+  `bannr.reducedMotion`, `bannr.onVisibility(fn)`, `bannr.track(name)`.
+
+Rules: vanilla JS and CSS only, no network requests (except the Lead Form), touch and mouse, stay
+within `weightBudgetKB`, open URLs only via `bannr.exit()`, report every declared event via
+`bannr.track()`, and clean up listeners and timers in `destroy`.
 
 ## Platform details not verified
 

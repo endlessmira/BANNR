@@ -11,6 +11,7 @@ import '@/styles/animation.css';
 import '@/styles/timeline.css';
 import '@/styles/export.css';
 import '@/styles/validation.css';
+import '@/styles/components.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root element missing');

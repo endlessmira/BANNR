@@ -173,3 +173,21 @@ export async function registerAssetUrl(id: ID, blob: Blob): Promise<void> {
   urlCache.set(id, await blobToDataUrl(blob));
   notify();
 }
+
+/** Compresses and stores one image without adding a layer (used by component slots). */
+export async function storeImage(file: File): Promise<{ ref: AssetRef; notes: string[]; warnings: string[] }> {
+  const type = file.type || (file.name.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : '');
+  if (!IMAGE_TYPES.includes(type)) throw new Error(`${file.name}: unsupported file type. Use PNG, JPG, GIF, WebP or SVG.`);
+  const limit = resizeLimit(useEditorStore.getState().project?.sizes ?? []);
+  const dims = await imageSize(file);
+  const c = await compressImage(file, type, dims, limit);
+  const stored = await assetStore.put(c.blob, file.name);
+  const ref: AssetRef = { ...stored, width: c.width, height: c.height, ...(c.changed ? { originalBytes: file.size } : {}) };
+  urlCache.set(ref.id, await blobToDataUrl(c.blob));
+  notify();
+  const notes = c.changed ? [`${file.name}: compressed ${fmtSize(file.size)} → ${fmtSize(ref.bytes)}.`] : [];
+  const warnings = ref.bytes > LARGE_ASSET_KB * 1024
+    ? [`${file.name} is ${fmtSize(ref.bytes)}. Many ad platforms limit a whole banner to around ${LARGE_ASSET_KB} KB.`]
+    : [];
+  return { ref, notes, warnings };
+}
