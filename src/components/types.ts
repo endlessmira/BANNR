@@ -56,6 +56,8 @@ export interface ComponentDefinition {
   slots: readonly SlotDefinition[];
   /** true = needs swipe/drag/touch input: the layer then catches the pointer instead of the click layer. */
   capturesPointer: boolean;
+  /** Added full-banner at the bottom of the layer stack (e.g. animated backgrounds). */
+  addAsBackground?: boolean;
   emits: readonly string[];
   /** Max JS + CSS for this component (excluding images), checked by unit tests. */
   weightBudgetKB: number;

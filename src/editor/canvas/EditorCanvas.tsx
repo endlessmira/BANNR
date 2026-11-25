@@ -56,7 +56,7 @@ export function EditorCanvas({ project, sizeId, assetUrls, zoom }: Props) {
     const host = hostRef.current;
     if (!host || !fragment) return;
     const root = host.shadowRoot ?? host.attachShadow({ mode: 'open' });
-    root.innerHTML = `<style>${fragment.css}\n#clickArea{display:none}</style>${fragment.bodyHtml}`;
+    root.innerHTML = `<style>${fragment.css}\n#clickArea{display:none}*,*::before,*::after{animation:none!important;transition:none!important}</style>${fragment.bodyHtml}`;
   }, [fragment]);
 
   useEffect(() => () => cleanupRef.current?.(), []);

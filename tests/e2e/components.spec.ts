@@ -6,7 +6,7 @@ test('adds a Counter from the Components panel, edits it and plays it in Interac
   await page.getByTitle('Add a component', { exact: true }).click();
   const panel = page.locator('.comp-panel');
   await expect(panel).toBeVisible();
-  await panel.getByLabel('Search components').fill('count');
+  await panel.getByLabel('Search components').fill('counter');
   await expect(panel.locator('.comp-card')).toHaveCount(3);
   await panel.getByRole('button', { name: 'Counter', exact: true }).click();
   await expect(panel).toHaveCount(0);

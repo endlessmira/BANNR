@@ -12,7 +12,8 @@ export function canRotate(el: BannerElement): boolean {
 
 /**
  * Adds a component at its default size (never below its minimum, never larger than the banner),
- * centred on `center` (banner pixels) or on the banner. One undo step; the new layer is selected.
+ * centred on `center` (banner pixels) or on the banner. Background components (addAsBackground)
+ * fill the banner and go to the bottom of the stack. One undo step; the new layer is selected.
  */
 export function addComponent(type: string, presetId?: string, center?: { x: number; y: number }): ID | null {
   const st = useEditorStore.getState();
@@ -20,18 +21,24 @@ export function addComponent(type: string, presetId?: string, center?: { x: numb
   const def = getComponent(type);
   if (!size || !def) return null;
   const preset = presetId ? def.presets?.find((p) => p.id === presetId) : undefined;
-  const w = Math.max(def.minSize.width, Math.min(def.defaultSize.width, size.width));
-  const h = Math.max(def.minSize.height, Math.min(def.defaultSize.height, size.height));
+  const bg = def.addAsBackground === true;
+  const w = bg ? size.width : Math.max(def.minSize.width, Math.min(def.defaultSize.width, size.width));
+  const h = bg ? size.height : Math.max(def.minSize.height, Math.min(def.defaultSize.height, size.height));
   const cx = center?.x ?? size.width / 2;
   const cy = center?.y ?? size.height / 2;
-  const x = Math.round(Math.min(Math.max(0, cx - w / 2), Math.max(0, size.width - w)));
-  const y = Math.round(Math.min(Math.max(0, cy - h / 2), Math.max(0, size.height - h)));
-  const z = size.elements.reduce((m, e) => Math.max(m, e.zIndex), 0) + 1;
+  const x = bg ? 0 : Math.round(Math.min(Math.max(0, cx - w / 2), Math.max(0, size.width - w)));
+  const y = bg ? 0 : Math.round(Math.min(Math.max(0, cy - h / 2), Math.max(0, size.height - h)));
+  const z = bg
+    ? Math.min(0, ...size.elements.map((e) => e.zIndex))
+    : size.elements.reduce((m, e) => Math.max(m, e.zIndex), 0) + 1;
   const el = createComponent({
     componentType: def.type, componentVersion: def.version, preset: preset?.id,
     name: preset?.label ?? def.label, x, y, width: w, height: h, zIndex: z,
   });
-  st.update((d) => mutateSize(d, size.id, (s) => { s.elements.push(el); }));
+  st.update((d) => mutateSize(d, size.id, (s) => {
+    if (bg) s.elements.unshift(el);
+    else s.elements.push(el);
+  }));
   useEditorStore.getState().select([el.id]);
   return el.id;
 }
