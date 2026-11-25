@@ -2,7 +2,7 @@
 
 Browser-based HTML5 banner builder: drag-and-drop editor, animation, 26 interactive rich media components, and export of ad-server-ready zips for **Adform, CM360, DV360 and The Trade Desk**. Everything runs client-side.
 
-Status: **Phases 1–7 done**, plus a round of beta-test fixes. **All verified:** 244 Vitest unit tests (43 files) and 62 Playwright browser tests passing, including the latest Gesture changes (fade during the pause, single Gesture card). Everything is committed.
+Status: **Phases 1–7 done**, plus a round of beta-test fixes. **All verified:** 245 Vitest unit tests (43 files) and 63 Playwright browser tests passing, including the latest Gesture changes (fade during the pause, single Gesture card). Everything is committed.
 
 ---
 

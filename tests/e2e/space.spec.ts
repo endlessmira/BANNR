@@ -28,3 +28,16 @@ test('Space switches Edit and Preview, but not while typing', async ({ page }) =
   await page.keyboard.press('Space');
   await expect(active(page)).toHaveText('Edit');
 });
+
+test('Space on a checkbox switches mode and does not tick it', async ({ page }) => {
+  await newProject(page);
+  const repeat = page.getByLabel('Repeat animation');
+  await expect(repeat).not.toBeChecked();
+  await repeat.focus();
+  await page.keyboard.press('Space');
+  await expect(active(page)).toHaveText('Preview / Interact');
+  await page.keyboard.press('Space');
+  await expect(active(page)).toHaveText('Edit');
+  await expect(repeat).not.toBeChecked();
+  await expect(page.getByRole('button', { name: 'Fit to animations' })).toBeVisible();
+});

@@ -105,7 +105,7 @@ export function loopIssues(a: AnimationSettings, s: ProjectSettings, elements: r
   if (a.loops > s.maxLoops) out.push(`${a.loops} plays is over the limit of ${s.maxLoops}.`);
   const end = animationEnd(elements);
   if (end > a.duration + EPS) {
-    out.push(`Some animations end at ${r2(end)} s, after the ${r2(a.duration)} s loop, so they get cut off.`);
+    out.push(`Some animations end at ${r2(end)} s, past the end of the ${r2(a.duration)} s animation, so they get cut off.`);
   }
   return out;
 }
@@ -115,15 +115,15 @@ export function elementIssues(el: BannerElement, loop: number): string[] {
   const i = el.animation.in;
   const o = el.animation.out;
   const em = emphasisSpan(el);
-  if (isActive(i) && stepEnd(i) > loop + EPS) out.push(`The entrance ends at ${r2(stepEnd(i))} s, after the ${r2(loop)} s loop.`);
-  if (em && em.end > loop + EPS) out.push(`The emphasis ends at ${r2(em.end)} s, after the ${r2(loop)} s loop.`);
+  if (isActive(i) && stepEnd(i) > loop + EPS) out.push(`The entrance ends at ${r2(stepEnd(i))} s, past the end of the ${r2(loop)} s animation.`);
+  if (em && em.end > loop + EPS) out.push(`The emphasis ends at ${r2(em.end)} s, past the end of the ${r2(loop)} s animation.`);
   if (isActive(o)) {
     if (isActive(i) && o.delay < stepEnd(i) - EPS) {
       out.push('The exit is set to start before the entrance ends, so it waits until the entrance finishes.');
     } else if (em && o.delay < em.end - EPS) {
       out.push('The exit is set to start before the emphasis ends, so it waits until the emphasis finishes.');
     }
-    if (outEnd(el) > loop + EPS) out.push(`The exit ends at ${r2(outEnd(el))} s, after the ${r2(loop)} s loop.`);
+    if (outEnd(el) > loop + EPS) out.push(`The exit ends at ${r2(outEnd(el))} s, past the end of the ${r2(loop)} s animation.`);
   }
   return out;
 }

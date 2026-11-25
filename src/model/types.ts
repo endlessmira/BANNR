@@ -110,7 +110,7 @@ export type Easing =
   | 'linear' | 'ease' | 'ease-in' | 'ease-out' | 'ease-in-out'
   | `cubic-bezier(${number},${number},${number},${number})`;
 
-/** All times are in seconds, measured from the start of the loop. */
+/** All times are in seconds, measured from the start of the animation. */
 export interface AnimationStep {
   preset: AnimationPreset;
   delay: number;
@@ -123,7 +123,7 @@ export interface AnimationStep {
 /** Attention effects that play between the entrance and the exit. */
 export type EmphasisPreset = 'none' | 'pulse' | 'bounce' | 'wiggle' | 'flash';
 
-/** Times in seconds from the start of the loop; the emphasis waits for the entrance to finish. */
+/** Times in seconds from the start of the animation; the emphasis waits for the entrance to finish. */
 export interface EmphasisStep {
   preset: EmphasisPreset;
   delay: number;

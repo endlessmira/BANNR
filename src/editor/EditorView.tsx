@@ -88,17 +88,20 @@ export function EditorView({ onExit }: { onExit: () => void }) {
     }
   }, [restart]);
 
-  // Space switches between Edit and Preview / Interact, unless the user is typing or a dialog is open.
+  // Space types only in text fields. Everywhere else it switches Edit / Preview and never presses the focused control.
   useEffect(() => {
     const typing = (t: EventTarget | null): boolean =>
-      t instanceof HTMLElement && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(t.tagName));
+      t instanceof HTMLElement && (t.isContentEditable || t instanceof HTMLTextAreaElement ||
+        (t instanceof HTMLInputElement && ['text', 'search', 'email', 'url', 'tel', 'password', 'number'].includes(t.type))
+      );
     const toggle = () => changeMode(mode === 'edit' ? 'preview' : 'edit');
     const onKey = (e: KeyboardEvent) => {
-      if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
+      if (e.code !== 'Space' || e.ctrlKey || e.metaKey || e.altKey || typing(e.target)) return;
       if (document.querySelector('.modal-backdrop')) return;
       e.preventDefault();
       const a = document.activeElement;
-      if (a instanceof HTMLElement && a.tagName === 'BUTTON') a.blur();
+      if (e.repeat) return;
+      if (a instanceof HTMLElement && a !== document.body) a.blur();
       toggle();
     };
     window.addEventListener('keydown', onKey);

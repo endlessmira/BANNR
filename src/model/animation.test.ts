@@ -33,3 +33,11 @@ describe('animation helpers', () => {
     expect(loopIssues({ duration: 15, loops: 2 }, DEFAULT_SETTINGS, [])).toEqual([]);
   });
 });
+
+describe('animation wording', () => {
+  it('cut-off warnings talk about the animation, not a loop', () => {
+    const el = createText({ animation: { in: fade(0, 12), out: null } });
+    const issues = loopIssues({ duration: 10, loops: 1 }, DEFAULT_SETTINGS, [el]);
+    expect(issues.join(' ')).toContain('past the end of the 10 s animation');
+  });
+});

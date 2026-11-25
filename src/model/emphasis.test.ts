@@ -15,7 +15,7 @@ describe('emphasis animations', () => {
     expect(emphasisSpan(el)).toEqual({ start: 1, end: 2, preset: 'wiggle' });
     expect(outStart(el)).toBe(2);
     expect(animationEnd([el])).toBe(2.5);
-    expect(elementIssues(el, 1.8)).toContain('The emphasis ends at 2 s, after the 1.8 s loop.');
+    expect(elementIssues(el, 1.8)).toContain('The emphasis ends at 2 s, past the end of the 1.8 s animation.');
   });
 
   it('one pulse in 1 s', () => {

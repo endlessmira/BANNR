@@ -82,12 +82,12 @@ export function AnimationSection({ el }: { el: BannerElement }) {
       <EmphasisEditor el={el} />
       <StepEditor id={el.id} phase="out" step={el.animation.out} loop={loop} />
       {issues.map((t) => <p key={t} className="anim-warn">{t}</p>)}
-      <p className="muted small">Times are from the start of the loop. Play it in Preview; the canvas shows the resting state.</p>
+      <p className="muted small">Times are from the start of the animation. Play it in Preview; the canvas shows the resting state.</p>
     </Section>
   );
 }
 
-/** Loop length and play count for a banner size (shown when nothing is selected). */
+/** Animation length and play count for a banner size (shown when nothing is selected). */
 export function LoopSettings({ size }: { size: Size }) {
   const settings = useEditorStore((s) => s.project?.settings);
   const a = size.animationSettings;
@@ -129,7 +129,7 @@ export function LoopSettings({ size }: { size: Size }) {
       <div className="btn-row">
         <button type="button" className="secondary small-btn" disabled={end === 0}
           onClick={() => edit('fit', (s) => { s.animationSettings.duration = fitLoop(s.elements); })}>
-          Fit loop to animations
+          Fit to animations
         </button>
         <button type="button" className="secondary small-btn" onClick={applyAll}>Apply to all sizes</button>
       </div>

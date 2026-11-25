@@ -158,7 +158,7 @@ export function runChecks(input: CheckInput): ValidationResult[] {
     : res('animation-loops', 'pass', `${a.loops} of ${s.maxLoops} plays`));
   const end = animationEnd(size.elements);
   if (end > a.duration + 1e-9) {
-    out.push(res('animation-cutoff', 'warning', `Some animations end at ${fmtS(end)}, after the ${fmtS(a.duration)} loop, so they get cut off`));
+    out.push(res('animation-cutoff', 'warning', `Some animations end at ${fmtS(end)}, past the end of the ${fmtS(a.duration)} animation, so they get cut off`));
   }
 
   // ── Notes ──
