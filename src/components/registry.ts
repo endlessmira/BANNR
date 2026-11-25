@@ -9,6 +9,7 @@ import { counter } from './counter';
 import { cube } from './cube';
 import { dragdrop } from './dragdrop';
 import { flip } from './flip';
+import { gesture } from './gesture';
 import { gradient_ } from './gradient';
 import { hoverreveal } from './hoverreveal';
 import { leadform } from './leadform';
@@ -26,7 +27,7 @@ import type { ComponentDefinition } from './types';
 /** Every component, keyed by type. Adding a component = adding its folder and one line here. */
 export const COMPONENTS: Readonly<Record<string, ComponentDefinition>> = Object.fromEntries(
   [
-    cascade, gradient_, cube, flip, tilt, orbit, carousel, carouselset, cardswipe, panorama,
+    cascade, gradient_, gesture, cube, flip, tilt, orbit, carousel, carouselset, cardswipe, panorama,
     scratch, peel, wipe, hoverreveal, zoom, counter, countdown, clock, leadform, memory, catchGame, slice, dragdrop,
   ].map((d) => [d.type, d]),
 );

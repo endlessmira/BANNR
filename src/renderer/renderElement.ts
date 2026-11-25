@@ -53,7 +53,7 @@ function boxDecls(box: BoxStyle | undefined): Decls {
   const stroke = box.stroke && box.stroke.width > 0 ? box.stroke : undefined;
   return {
     background: paintCss(box.fill),
-    border: stroke ? `${px(stroke.width)} ${stroke.style} ${safeColor(stroke.color, '#000')}` : undefined,
+    outline: stroke ? `${px(stroke.width)} ${stroke.style} ${safeColor(stroke.color, '#000')}` : undefined,
     'border-radius': radiusCss(box.radius),
     'box-shadow': box.shadows?.length ? box.shadows.map(shadowCss).join(',') : undefined,
   };

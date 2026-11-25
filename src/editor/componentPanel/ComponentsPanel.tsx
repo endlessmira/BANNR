@@ -22,7 +22,7 @@ function buildCards(): Card[] {
   const out: Card[] = [];
   for (const def of listComponents()) {
     out.push({ key: def.type, def, title: def.label, aria: def.label, description: def.description });
-    for (const p of def.presets ?? []) {
+    for (const p of def.hidePresetCards ? [] : def.presets ?? []) {
       out.push({
         key: `${def.type}:${p.id}`, def, presetId: p.id, title: p.label, aria: `${def.label} · ${p.label}`,
         description: p.description ?? def.description,

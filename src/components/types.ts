@@ -74,6 +74,8 @@ export interface ComponentDefinition {
   description: string;
   icon: string;
   presets?: readonly ComponentPreset[];
+  /** Show only one card in the Components panel; the presets stay in the settings. */
+  hidePresetCards?: boolean;
   defaultSize: { width: number; height: number };
   minSize: { width: number; height: number };
   recommendedSizes: readonly string[];
