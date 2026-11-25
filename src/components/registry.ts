@@ -1,3 +1,4 @@
+import { carousel } from './carousel';
 import { cascade } from './cascade';
 import { clock } from './clock';
 import { countdown } from './countdown';
@@ -12,7 +13,7 @@ import type { ComponentDefinition } from './types';
 
 /** Every component, keyed by type. Adding a component = adding its folder and one line here. */
 export const COMPONENTS: Readonly<Record<string, ComponentDefinition>> = Object.fromEntries(
-  [cascade, gradient_, cube, flip, tilt, orbit, counter, countdown, clock, leadform].map((d) => [d.type, d]),
+  [cascade, gradient_, cube, flip, tilt, orbit, carousel, counter, countdown, clock, leadform].map((d) => [d.type, d]),
 );
 
 export const getComponent = (type: string): ComponentDefinition | undefined =>
