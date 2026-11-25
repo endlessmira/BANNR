@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MOUNT_JS, RUNTIME_JS } from '@/runtime/runtime';
 import { hoverreveal } from './hoverreveal';
-import { peel, peelPolygons } from './peel';
+import { peel, peelTop } from './peel';
 import { listComponents } from './registry';
 import { defaultProps, missingSlots, resolveProps, schemaIssues } from './settings';
 import { zoom } from './zoom';
@@ -10,23 +10,26 @@ const ctx = { id: 'x', sel: '#x', width: 300, height: 250 };
 const count = (html: string, s: string) => html.split(s).length - 1;
 
 describe('peel render', () => {
-  it('is registered, needs both images, and computes the peel shapes', () => {
+  it('is registered, needs both images, and computes the peel shape', () => {
     expect(listComponents().map((d) => d.type)).toEqual(expect.arrayContaining(['peel', 'hoverreveal', 'zoom']));
     expect(schemaIssues(peel)).toEqual([]);
     expect(missingSlots(peel, {})).toEqual(['Sticker (top)', 'Underneath']);
-    expect(peelPolygons('br', 20)).toEqual({
-      top: 'polygon(0% 0%,100% 0%,100% 80%,80% 100%,0% 100%)',
-      flap: 'polygon(80% 100%,100% 80%,80% 80%)',
-    });
-    expect(peelPolygons('tl', 20).top).toBe('polygon(100% 100%,0% 100%,0% 20%,20% 0%,100% 0%)');
+    expect(peelTop('br', 20)).toBe('polygon(0% 0%,100% 0%,100% 80%,80% 100%,0% 100%)');
+    expect(peelTop('tl', 20)).toBe('polygon(100% 100%,0% 100%,0% 20%,20% 0%,100% 0%)');
   });
 
-  it('shows the sticker with a peeked corner; the backup can show the content underneath', () => {
-    const html = peel.render(defaultProps(peel), {}, ctx).html;
-    expect([count(html, 'data-pt="'), count(html, 'data-pu="')]).toEqual([1, 1]);
-    expect(html).toContain('clip-path:polygon(0% 0%,100% 0%,100% 85%,85% 100%,0% 100%)');
+  it('the corner is always curled, with a shaded 3D flap and a cast shadow', () => {
+    const out = peel.render(defaultProps(peel), {}, ctx);
+    expect([count(out.html, 'data-pt="'), count(out.html, 'data-pu="'), count(out.html, 'data-fl="'), count(out.html, 'data-sh="')])
+      .toEqual([1, 1, 1, 1]);
+    expect(out.html).toContain('clip-path:polygon(0% 0%,100% 0%,100% 90%,90% 100%,0% 100%)');
+    expect(out.html).toContain('data-fl="1" style="width:10%;height:10%"');
+    expect(out.css).toContain('linear-gradient(to top left,rgba(0,0,0,0.24) 50%');
+    expect(out.css).toContain('linear-gradient(to bottom right,rgba(0,0,0,0.33) 50%');
+    expect(peel.render(resolveProps(peel, { corner: 'tl' }), {}, ctx).css).toContain('linear-gradient(to bottom right,rgba(0,0,0,0.24)');
+    expect(peel.render(resolveProps(peel, { restCurl: 0 }), {}, ctx).html).toContain('data-fl="1" style="width:0%;height:0%"');
     const under = peel.backupState(resolveProps(peel, { backupShows: 'under' }), {}, ctx).html;
-    expect([count(under, 'data-pt="'), count(under, 'data-pu="')]).toEqual([0, 1]);
+    expect([count(under, 'data-pt="'), count(under, 'data-fl="'), count(under, 'data-pu="')]).toEqual([0, 0, 1]);
   });
 });
 
@@ -93,19 +96,25 @@ const noop = () => {};
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(0); });
 afterEach(() => { vi.useRealTimers(); });
 
+function makePeel(props: object) {
+  const top = { style: {} as Record<string, string> };
+  const fl = { style: {} as Record<string, string> };
+  const sh = { style: {} as Record<string, string> };
+  const root = { getAttribute: () => 'br', classList: { add: vi.fn(), remove: noop }, addEventListener: noop, removeEventListener: noop };
+  const el = host('peel', resolveProps(peel, { hint: false, ...props }),
+    (s) => (s === '.bpl' ? root : s === '.bpl-top' ? top : s === '.bpl-fl' ? fl : s === '.bpl-sh' ? sh : null));
+  return { top, fl, sh, root, el, ...run(el, peel.runtime) };
+}
+
 describe('peel runtime', () => {
-  it('a long drag peels the sticker off without exiting; then a tap exits', () => {
-    const top = { style: {} as Record<string, string> };
-    const flap = { style: {} as Record<string, string> };
-    const root = { getAttribute: () => 'br', classList: { add: vi.fn(), remove: noop }, addEventListener: noop, removeEventListener: noop };
-    const el = host('peel', resolveProps(peel, { autoPeek: false, hint: false }),
-      (s) => (s === '.bpl' ? root : s === '.bpl-top' ? top : s === '.bpl-flap' ? flap : null));
-    const { bannr } = run(el, peel.runtime);
+  it('starts curled; a long drag peels the sticker off without exiting; then a tap exits', () => {
+    const { top, fl, sh, root, el, bannr } = makePeel({ autoPeek: false });
     expect(el.style.touchAction).toBe('none');
-    expect(top.style.clipPath).toBe('polygon(0% 0%,100% 0%,100% 100%,100% 100%,0% 100%)');
+    expect(top.style.clipPath).toBe('polygon(0% 0%,100% 0%,100% 90%,90% 100%,0% 100%)');
+    expect([fl.style.width, sh.style.height]).toEqual(['10%', '10%']);
 
     el.fire('pointerdown', ev(250, 200)); el.fire('pointermove', ev(50, 50)); el.fire('pointerup', ev(50, 50));
-    expect(top.style.clipPath).toContain('36.67%');
+    expect(top.style.clipPath).toContain('26.67%');
     expect(root.classList.add).toHaveBeenCalledWith('bpl-off');
     expect(bannr.track).toHaveBeenCalledWith('interaction_start');
     expect(bannr.track).toHaveBeenCalledWith('peel_complete');
@@ -116,18 +125,27 @@ describe('peel runtime', () => {
     expect(bannr.exit).toHaveBeenCalledTimes(1);
   });
 
-  it('a short drag springs back and a tap does nothing before the peel', () => {
-    const top = { style: {} as Record<string, string> };
-    const flap = { style: {} as Record<string, string> };
-    const root = { getAttribute: () => 'br', classList: { add: vi.fn(), remove: noop }, addEventListener: noop, removeEventListener: noop };
-    const el = host('peel', resolveProps(peel, { autoPeek: false, hint: false }),
-      (s) => (s === '.bpl' ? root : s === '.bpl-top' ? top : s === '.bpl-flap' ? flap : null));
-    const { bannr } = run(el, peel.runtime);
+  it('a short drag springs back to the visible corner; a tap does nothing before the peel', () => {
+    const { fl, root, el, bannr } = makePeel({ autoPeek: false });
     el.fire('pointerdown', ev(250, 200)); el.fire('pointermove', ev(220, 170)); el.fire('pointerup', ev(220, 170));
     expect(root.classList.add).not.toHaveBeenCalled();
-    expect(top.style.clipPath).toBe('polygon(0% 0%,100% 0%,100% 100%,100% 100%,0% 100%)');
+    expect(fl.style.width).toBe('10%');
     el.fire('pointerdown', ev(10, 10)); el.fire('pointerup', ev(10, 10));
     expect(bannr.exit).not.toHaveBeenCalled();
+  });
+
+  it('auto peek lifts the corner and springs back; mouse hover lifts it too', () => {
+    const { fl, frames } = makePeel({});
+    for (let i = 0; i < 26; i++) frames.shift()!(1 + i * 64);
+    expect(fl.style.width).toBe('25%');
+    for (let i = 26; i < 42; i++) frames.shift()!(1 + i * 64);
+    expect(fl.style.width).toBe('10%');
+
+    const h = makePeel({ autoPeek: false });
+    h.el.fire('pointerenter', { pointerType: 'mouse' });
+    expect(h.fl.style.width).toBe('25%');
+    h.el.fire('pointerleave', { pointerType: 'mouse' });
+    expect(h.fl.style.width).toBe('10%');
   });
 });
 

@@ -10,6 +10,7 @@ test('peel: dragging peels the sticker off without opening the landing page; the
   await newProject(page);
   await addCard(page, 'Peel');
   await expect(page.locator('.hitbox[data-name="Peel"]')).toHaveCSS('width', '480px');
+  await expect(page.locator('.canvas-render [data-fl]')).toHaveAttribute('style', /width:\s*10%/);
   await page.getByLabel('Auto peek', { exact: true }).uncheck();
   await page.getByRole('button', { name: 'Preview / Interact', exact: true }).click();
   const frame = page.frameLocator('.preview-frame');
