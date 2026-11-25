@@ -19,10 +19,25 @@ const closedSections: Set<string> = (() => {
   }
 })();
 let sectionQuery = '';
+/** Sections that start closed until the user opens them. */
+const DEFAULT_CLOSED: ReadonlySet<string> = new Set(['Fill', 'Stroke', 'Shadow']);
+const OPENED_KEY = 'bannr:openedSections';
+const openedSections: Set<string> = (() => {
+  try {
+    const v: unknown = hasStorage() ? JSON.parse(localStorage.getItem(OPENED_KEY) ?? '[]') : [];
+    return new Set<string>(Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+  } catch {
+    return new Set<string>();
+  }
+})();
+const isOpen = (t: string): boolean => (DEFAULT_CLOSED.has(t) ? openedSections.has(t) : !closedSections.has(t));
 const sectionSubs = new Set<() => void>();
 function sectionsChanged(): void {
   if (hasStorage()) {
-    try { localStorage.setItem(SECTIONS_KEY, JSON.stringify([...closedSections])); } catch { /* storage blocked */ }
+    try {
+      localStorage.setItem(SECTIONS_KEY, JSON.stringify([...closedSections]));
+      localStorage.setItem(OPENED_KEY, JSON.stringify([...openedSections]));
+    } catch { /* storage blocked */ }
   }
   sectionSubs.forEach((f) => f());
 }
@@ -30,15 +45,19 @@ const subscribeSections = (f: () => void): (() => void) => {
   sectionSubs.add(f);
   return () => { sectionSubs.delete(f); };
 };
-export function expandAllSections(): void { closedSections.clear(); sectionsChanged(); }
+export function expandAllSections(): void {
+  closedSections.clear();
+  for (const t of DEFAULT_CLOSED) openedSections.add(t);
+  sectionsChanged();
+}
 export function collapseSections(titles: readonly string[]): void {
-  for (const t of titles) if (t) closedSections.add(t);
+  for (const t of titles) if (t) { closedSections.add(t); openedSections.delete(t); }
   sectionsChanged();
 }
 export function setSectionQuery(q: string): void { sectionQuery = q.trim().toLowerCase(); sectionsChanged(); }
 
 export function Section({ title, children }: { title: string; children: ReactNode }) {
-  const open = useSyncExternalStore(subscribeSections, () => !closedSections.has(title));
+  const open = useSyncExternalStore(subscribeSections, () => isOpen(title));
   const q = useSyncExternalStore(subscribeSections, () => sectionQuery);
   const ref = useRef<HTMLElement>(null);
   const show = open || q !== '';
@@ -59,7 +78,10 @@ export function Section({ title, children }: { title: string; children: ReactNod
     root.toggleAttribute('data-sq-hide', !any);
   });
   const toggle = () => {
-    if (open) closedSections.add(title);
+    if (DEFAULT_CLOSED.has(title)) {
+      if (open) openedSections.delete(title);
+      else openedSections.add(title);
+    } else if (open) closedSections.add(title);
     else closedSections.delete(title);
     sectionsChanged();
   };

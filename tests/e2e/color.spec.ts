@@ -10,6 +10,7 @@ test('colours have an opacity setting (lead form background and a fill)', async 
   await expect(page.getByLabel('Background', { exact: true })).toHaveValue('rgba(255,255,255,0.5)');
 
   await page.getByTitle('Add rectangle', { exact: true }).click();
+  await page.getByRole('button', { name: 'Fill', exact: true }).click();
   await page.getByRole('spinbutton', { name: 'Fill color opacity', exact: true }).fill('40');
   await expect(page.locator('.canvas-render .el-shape')).toHaveCSS('background-color', 'rgba(242, 169, 2, 0.4)');
 });
