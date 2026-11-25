@@ -107,7 +107,7 @@ export const GAME_JS = String.raw`if (!bannr.game) bannr.game = function (el, p,
   el.style.touchAction = 'pan-y';
   function show(k) { for (var s in scr) { if (s === k) scr[s].classList.add('bgm-show'); else scr[s].classList.remove('bgm-show'); } }
   function sec(ms) { return String(Math.ceil(Math.max(0, ms) / 1000)); }
-  function finish(k, ev) { if (!on) return; on = false; lp.stop(); root.classList.add('bgm-end'); show(k); bannr.track(ev); }
+  function finish(k, ev) { if (!on) return; on = false; lp.stop(); el.style.touchAction = 'pan-y'; root.classList.add('bgm-end'); show(k); bannr.track(ev); }
   var api = {
     playing: function () { return on; },
     score: function (v) { if (sc) sc.textContent = String(v); },
@@ -129,6 +129,7 @@ export const GAME_JS = String.raw`if (!bannr.game) bannr.game = function (el, p,
     show('');
     root.classList.remove('bgm-end');
     root.classList.add('bgm-on');
+    if (h.touch) el.style.touchAction = h.touch;
     on = true; left = limit;
     if (tm) tm.textContent = limit > 0 ? sec(limit) : '';
     if (!started) { started = true; bannr.track('interaction_start'); }
@@ -144,7 +145,7 @@ export const GAME_JS = String.raw`if (!bannr.game) bannr.game = function (el, p,
     tap: function () {
       var b = downT && downT.closest ? downT.closest('[data-play],[data-replay],[data-skip],[data-cta]') : null;
       if (b) {
-        if (b.getAttribute('data-skip')) { on = false; lp.stop(); bannr.track('game_skip'); bannr.exit(); }
+        if (b.getAttribute('data-skip')) { on = false; lp.stop(); el.style.touchAction = 'pan-y'; bannr.track('game_skip'); bannr.exit(); }
         else if (b.getAttribute('data-cta')) bannr.exit();
         else { if (b.getAttribute('data-replay')) bannr.track('game_replay'); play(); }
       } else if (on && h.tap) h.tap(downT);
