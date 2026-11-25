@@ -14,6 +14,7 @@ import '@/styles/validation.css';
 import '@/styles/components.css';
 import '@/styles/color.css';
 import '@/styles/carouselset.css';
+import '@/styles/fit.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('#root element missing');

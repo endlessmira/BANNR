@@ -10,6 +10,7 @@ import { useEditorStore } from '../store/editorStore';
 import { fitToBanner, resetComponentProps, setComponentPreset, setComponentProp, setSlotValues } from './actions';
 import { uploadToSlot } from './slotUpload';
 import { componentWeightKB } from './weight';
+import { ComponentFitNotice } from './FitNotice';
 
 type Notice = (m: string | null) => void;
 type GroupField = Extract<SettingField, { type: 'group' }>;
@@ -320,6 +321,7 @@ export function ComponentSettings({ el }: { el: ComponentElement }) {
         </p>
         <button type="button" className="secondary small-btn" title="Make this layer exactly the size of the banner" onClick={() => fitToBanner(el.id)}>Fit to banner</button>
         {def.notice ? <p className="anim-warn" role="note">{def.notice}</p> : null}
+        <ComponentFitNotice el={el} />
         {def.presets && def.presets.length > 0 ? (
           <SelectField label="Preset" value={el.preset ?? ''} options={presets} onChange={(v) => setComponentPreset(el.id, v || null)} />
         ) : null}

@@ -1,3 +1,4 @@
+import { withComponentMins } from '@/components/fit';
 import { adaptSize, blankSize } from '@/model/adapt';
 import { STANDARD_SIZES, sizeKey } from '@/model/sizes';
 import type { ID, Project, Size } from '@/model/types';
@@ -37,7 +38,7 @@ export function addSizes(dims: readonly Dim[], mode: AddMode): AddResult {
       continue;
     }
     existing.add(key);
-    const size = mode === 'master' && master ? adaptSize(master, w, h) : blankSize(master, w, h);
+    const size = mode === 'master' && master ? withComponentMins(adaptSize(master, w, h)) : blankSize(master, w, h);
     const label = labelFor(w, h);
     if (label) size.label = label;
     created.push(size);
@@ -76,7 +77,7 @@ export function regenerateFromMaster(id: ID): void {
   const master = masterOf(p);
   const target = p.sizes.find((s) => s.id === id);
   if (!master || !target || master.id === id) return;
-  const fresh = adaptSize(master, target.width, target.height);
+  const fresh = withComponentMins(adaptSize(master, target.width, target.height));
   st.update((d) => {
     const s = d.sizes.find((x) => x.id === id);
     if (!s) return;

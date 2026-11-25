@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ID, Project } from '@/model/types';
 import { regenerateFromMaster, removeSize } from '../sizes';
+import { SizeFitBadge } from '../componentPanel/FitNotice';
 import { useEditorStore } from '../store/editorStore';
 import { AddSizesDialog } from './AddSizesDialog';
 
@@ -29,6 +30,7 @@ export function SizesPanel({ project, activeSizeId }: { project: Project; active
               >
                 {dims}
                 {isMaster && <span className="tag">master</span>}
+                <SizeFitBadge size={s} />
               </button>
               {!isMaster && (
                 <button

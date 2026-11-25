@@ -1,0 +1,4 @@
+/* Phase 7f: component fit warnings */
+.size-warn { margin-left: 6px; color: #e5a50a; font-size: 12px; }
+.fit-notice { display: flex; flex-direction: column; gap: 6px; }
+.fit-notice p { margin: 0; }
