@@ -203,7 +203,7 @@ export function Timeline({ size, mode, onSeek }: Props) {
           {settings ? ` · limit ${settings.maxAnimationSeconds} s, ${settings.maxLoops} plays` : ''}
         </span>
         <span className="tl-time">
-          {preview ? `${fmtS(pos.t)} · play ${pos.play}/${plays}` : 'Drag bars to change delays · Shift = 0.5 s · Ctrl + scroll to zoom'}
+          {preview ? `${pos.t.toFixed(1)} s · play ${pos.play}/${plays}` : 'Drag bars to change delays · Shift = 0.5 s · Ctrl + scroll to zoom'}
         </span>
         <div className="tl-tools">
           <button
