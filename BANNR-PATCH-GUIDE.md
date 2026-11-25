@@ -4,7 +4,7 @@ Give this file to a new chat together with BANNR-DEV-NOTE.md. It describes exact
 
 The user works on **Windows, in Git Bash**, inside the `bannr` folder. After every change they run `npm run check` and `npm run test:e2e`, then commit and push.
 
-The project is on GitHub: **https://github.com/endlessmira/BANNR** (branch `master`, remote `origin`). Every tested change is pushed there.
+The project is on GitHub: **https://github.com/endlessmira/BANNR** (branch `main`, remote `origin`). Every tested change is pushed there.
 
 ---
 
