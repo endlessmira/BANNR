@@ -120,7 +120,23 @@ export interface AnimationStep {
   distance?: number;
 }
 
-export interface ElementAnimation { in: AnimationStep | null; out: AnimationStep | null }
+/** Attention effects that play between the entrance and the exit. */
+export type EmphasisPreset = 'none' | 'pulse' | 'bounce' | 'wiggle' | 'flash';
+
+/** Times in seconds from the start of the loop; the emphasis waits for the entrance to finish. */
+export interface EmphasisStep {
+  preset: EmphasisPreset;
+  delay: number;
+  /** Total length; the repeats are played within it. */
+  duration: number;
+  /** Number of cycles within the length. */
+  repeat: number;
+  easing?: Easing;
+  /** Pulse: size in %, bounce: height in px, wiggle: angle in degrees. */
+  amount?: number;
+}
+
+export interface ElementAnimation { in: AnimationStep | null; out: AnimationStep | null; emphasis?: EmphasisStep | null }
 
 /* ───────────── Elements ───────────── */
 

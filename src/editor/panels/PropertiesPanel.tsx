@@ -127,11 +127,12 @@ function ElementProperties({ el, onUpload }: { el: BannerElement; onUpload: OnUp
 
         {(el.type === 'text' || el.type === 'button') && <Typography id={id} t={el.textStyle} isText={el.type === 'text'} />}
         {el.type === 'image' && <ImageSection el={el} onUpload={onUpload} />}
+        {el.type !== 'component' && <AnimationSection el={el} />}
         {el.type !== 'group' && el.type !== 'component' && <BoxSections el={el} />}
-        <AnimationSection el={el} />
         {el.type === 'component' && (
           <ComponentSettings el={el} />
         )}
+        {el.type === 'component' && <AnimationSection el={el} />}
         {el.type === 'group' && (
           <p className="muted small">Resizing a group scales its layers (not font sizes). Ungroup to edit layers individually.</p>
         )}

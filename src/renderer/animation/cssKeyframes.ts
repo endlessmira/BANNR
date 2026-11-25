@@ -1,13 +1,13 @@
-import { DEFAULT_DISTANCE, hasAnimation, isActive } from '@/model/animation';
-import type { AnimationPreset, BannerElement, Size } from '@/model/types';
+import { DEFAULT_DISTANCE, emphasisAmount, hasAnimation, isActive, isEmphasis } from '@/model/animation';
+import type { AnimationPreset, BannerElement, EmphasisPreset, Size } from '@/model/types';
 import { type Decls, cssId, decls, round } from '../css';
 import type { AnimationEngine } from './engine';
 
 /**
  * Default animation engine: plain CSS @keyframes, no scripts, nothing for ad servers to block.
- * Each animated element gets one @keyframes spanning the whole loop, so all elements stay in sync
- * and the loop count is a simple animation-iteration-count. Element rotation uses the separate
- * CSS `rotate` property, so it combines with the `transform` animated here.
+ * Each animated element gets one @keyframes spanning the whole loop: entrance, then emphasis
+ * (pulse, bounce, wiggle, flash), then exit. Element rotation uses the separate CSS `rotate`
+ * property, so it combines with the `transform` animated here.
  */
 export interface FrameState { transform: string; opacity: number; filter?: string }
 interface Stop { pct: number; state: FrameState; easing?: string }
@@ -43,6 +43,25 @@ export function offState(preset: AnimationPreset, phase: 'in' | 'out', distance:
   }
 }
 
+/** One repetition of an emphasis: [fraction of the repetition, state]. Starts and ends at rest. */
+export function emphasisFrames(preset: EmphasisPreset, amount: number | undefined, base: number): Array<[number, FrameState]> {
+  const a = amount ?? emphasisAmount(preset)?.default ?? 0;
+  const T = (t: string): FrameState => ({ transform: t, opacity: base });
+  const rest = T('none');
+  switch (preset) {
+    case 'pulse': return [[0.5, T(`scale(${round(1 + a / 100, 3)})`)], [1, rest]];
+    case 'bounce': return [[0.3, T(`translateY(${-round(a)}px)`)], [0.5, rest], [0.7, T(`translateY(${-round(a * 0.4)}px)`)], [1, rest]];
+    case 'wiggle': return [
+      [0.2, T(`rotate(${round(a)}deg)`)], [0.4, T(`rotate(${-round(a)}deg)`)],
+      [0.6, T(`rotate(${round(a * 0.6)}deg)`)], [0.8, T(`rotate(${-round(a * 0.6)}deg)`)], [1, rest],
+    ];
+    case 'flash': return [
+      [0.25, { transform: 'none', opacity: 0 }], [0.5, rest], [0.75, { transform: 'none', opacity: 0 }], [1, rest],
+    ];
+    case 'none': return [];
+  }
+}
+
 function merge(stops: readonly Stop[]): Stop[] {
   const out: Stop[] = [];
   for (const s of stops) {
@@ -59,7 +78,8 @@ export function elementKeyframes(el: BannerElement, loop: number): string | null
   const b = el.animation.out;
   const ain = isActive(a) ? a : null;
   const aout = isActive(b) ? b : null;
-  if ((!ain && !aout) || !(loop > 0)) return null;
+  const aem = isEmphasis(el.animation.emphasis) ? el.animation.emphasis : null;
+  if ((!ain && !aout && !aem) || !(loop > 0)) return null;
 
   const base = Math.min(1, Math.max(0, el.opacity));
   const rest: FrameState = { transform: 'none', opacity: base };
@@ -75,9 +95,24 @@ export function elementKeyframes(el: BannerElement, loop: number): string | null
   } else {
     stops.push({ pct: 0, state: rest });
   }
+
+  let emEnd = inEnd;
+  if (aem) {
+    const t0 = Math.max(inEnd, aem.delay);
+    const reps = Math.max(1, Math.min(10, Math.round(aem.repeat)));
+    const d = Math.max(0.05, aem.duration) / reps;
+    const ez = safeEasing(aem.easing ?? 'ease-in-out');
+    const frames = emphasisFrames(aem.preset, aem.amount, base);
+    stops.push({ pct: pct(t0), state: rest, easing: ez });
+    for (let r = 0; r < reps; r++) {
+      for (const [f, st] of frames) stops.push({ pct: pct(t0 + (r + f) * d), state: st, easing: ez });
+    }
+    emEnd = t0 + reps * d;
+  }
+
   if (aout) {
     const off = offState(aout.preset, 'out', aout.distance ?? DEFAULT_DISTANCE, base);
-    const t0 = Math.max(inEnd, aout.delay);
+    const t0 = Math.max(emEnd, aout.delay);
     const t1 = t0 + Math.max(0, aout.duration);
     stops.push({ pct: pct(t0), state: rest, easing: safeEasing(aout.easing) }, { pct: pct(t1), state: off }, { pct: 100, state: off });
   } else {

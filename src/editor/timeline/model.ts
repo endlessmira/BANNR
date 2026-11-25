@@ -1,10 +1,10 @@
-import { isActive, outStart, stepEnd } from '@/model/animation';
-import type { AnimationPreset, AnimationSettings, BannerElement, ID } from '@/model/types';
+import { emphasisSpan, isActive, outStart, stepEnd } from '@/model/animation';
+import type { AnimationSettings, BannerElement, ID } from '@/model/types';
 
 const EPS = 1e-6;
 
-export interface Span { start: number; end: number; preset: AnimationPreset }
-export interface TimelineRow { id: ID; name: string; locked: boolean; hidden: boolean; in: Span | null; out: Span | null }
+export interface Span { start: number; end: number; preset: string }
+export interface TimelineRow { id: ID; name: string; locked: boolean; hidden: boolean; in: Span | null; emphasis: Span | null; out: Span | null }
 
 /** Entrance and exit bars for one layer. The exit starts no earlier than the end of the entrance. */
 export function timelineRow(el: BannerElement): TimelineRow {
@@ -17,6 +17,7 @@ export function timelineRow(el: BannerElement): TimelineRow {
     locked: el.locked,
     hidden: el.hidden,
     in: isActive(i) ? { start: Math.max(0, i.delay), end: stepEnd(i), preset: i.preset } : null,
+    emphasis: emphasisSpan(el),
     out: isActive(o) ? { start: os, end: os + Math.max(0, o.duration), preset: o.preset } : null,
   };
 }

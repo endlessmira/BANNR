@@ -1,5 +1,5 @@
 import { type PointerEvent as ReactPointerEvent, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ANIMATION_PRESETS, animationEnd, totalSeconds } from '@/model/animation';
+import { ANIMATION_PRESETS, EMPHASIS_PRESETS, animationEnd, totalSeconds } from '@/model/animation';
 import type { ID, Size } from '@/model/types';
 import type { EditorMode } from '../EditorHeader';
 import { useElementSize } from '../hooks/useElementSize';
@@ -12,7 +12,7 @@ import {
 } from './model';
 import { usePlayhead } from './playhead';
 
-const PRESET_LABEL = new Map(ANIMATION_PRESETS);
+const PRESET_LABEL = new Map<string, string>([...ANIMATION_PRESETS, ...EMPHASIS_PRESETS]);
 const fmtS = (n: number): string => `${Math.round(n * 100) / 100} s`;
 const BAR_LABEL_MIN_PX = 44;
 /** Width of the layer-name column (see .tl-names in timeline.css). */
@@ -41,7 +41,7 @@ function readSnap(): boolean {
 }
 
 /** Sets an entrance/exit delay. One drag = one undo step (shared coalesce key). */
-function setDelay(id: ID, phase: 'in' | 'out', delay: number, key: string): void {
+function setDelay(id: ID, phase: 'in' | 'out' | 'emphasis', delay: number, key: string): void {
   const { activeSizeId, update } = useEditorStore.getState();
   if (!activeSizeId) return;
   update((d) => mutateSize(d, activeSizeId, (s) => {
@@ -180,7 +180,7 @@ export function Timeline({ size, mode, onSeek }: Props) {
     drag((ev) => seekAt(ev.clientX, ev.altKey, ev.shiftKey));
   };
 
-  const onBarDown = (e: ReactPointerEvent<HTMLDivElement>, id: ID, phase: 'in' | 'out', span: Span, locked: boolean) => {
+  const onBarDown = (e: ReactPointerEvent<HTMLDivElement>, id: ID, phase: 'in' | 'out' | 'emphasis', span: Span, locked: boolean) => {
     if (e.button !== 0) return;
     e.stopPropagation();
     select([id]);
@@ -243,7 +243,7 @@ export function Timeline({ size, mode, onSeek }: Props) {
             </div>
             {rows.map((r) => (
               <div key={r.id} className="tl-track" data-selected={selection.includes(r.id)} data-hidden={r.hidden}>
-                {(['in', 'out'] as const).map((phase) => {
+                {(['in', 'emphasis', 'out'] as const).map((phase) => {
                   const span = r[phase];
                   if (!span) return null;
                   const width = Math.max(6, (span.end - span.start) * pps);
@@ -251,7 +251,7 @@ export function Timeline({ size, mode, onSeek }: Props) {
                   return (
                     <div key={phase} className="tl-bar" data-phase={phase} data-over={span.end > loop + 1e-9}
                       data-static={preview || r.locked} style={{ left: span.start * pps, width }}
-                      title={`${phase === 'in' ? 'Entrance' : 'Exit'}: ${label}, ${fmtS(span.start)} to ${fmtS(span.end)}`}
+                      title={`${phase === 'in' ? 'Entrance' : phase === 'out' ? 'Exit' : 'Emphasis'}: ${label}, ${fmtS(span.start)} to ${fmtS(span.end)}`}
                       onPointerDown={(e) => onBarDown(e, r.id, phase, span, r.locked)}>
                       {width >= BAR_LABEL_MIN_PX ? label : null}
                     </div>

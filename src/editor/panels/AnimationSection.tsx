@@ -6,6 +6,7 @@ import { mutateSize } from '../mutate';
 import { findElement, findSize } from '../ops';
 import { useEditorStore } from '../store/editorStore';
 import { NumberField, type Opt, Section, SelectField } from './fields';
+import { EmphasisEditor } from './EmphasisEditor';
 
 const EASINGS: Opt<string> = [
   ['ease-out', 'Ease out'], ['ease-in', 'Ease in'], ['ease-in-out', 'Ease in-out'], ['ease', 'Ease'], ['linear', 'Linear'],
@@ -78,6 +79,7 @@ export function AnimationSection({ el }: { el: BannerElement }) {
   return (
     <Section title="Animation">
       <StepEditor id={el.id} phase="in" step={el.animation.in} loop={loop} />
+      <EmphasisEditor el={el} />
       <StepEditor id={el.id} phase="out" step={el.animation.out} loop={loop} />
       {issues.map((t) => <p key={t} className="anim-warn">{t}</p>)}
       <p className="muted small">Times are from the start of the loop. Play it in Preview; the canvas shows the resting state.</p>
