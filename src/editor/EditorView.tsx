@@ -1,4 +1,4 @@
-import { type DragEvent, type ReactNode, useCallback, useState } from 'react';
+import { type CSSProperties, type DragEvent, type ReactNode, useCallback, useState } from 'react';
 import { BannerPreview, type PlayState, type SeekRequest } from '@/app/components/BannerPreview';
 import { ExportDialog } from '@/export/ExportDialog';
 import { KbCounter } from '@/export/KbCounter';
@@ -11,6 +11,8 @@ import { COMPONENT_DRAG_TYPE, ComponentsPanel } from './componentPanel/Component
 import { type EditorMode, EditorHeader } from './EditorHeader';
 import { useDocumentFonts } from './fonts/useDocumentFonts';
 import { useAutosave } from './hooks/useAutosave';
+import { usePanelWidth } from './hooks/usePanelWidth';
+import { PanelBar } from './panels/PanelBar';
 import { useEditorShortcuts } from './hooks/useEditorShortcuts';
 import { useElementSize } from './hooks/useElementSize';
 import { findElement, findSize } from './ops';
@@ -23,7 +25,7 @@ import { playhead } from './timeline/playhead';
 import { Timeline } from './timeline/Timeline';
 import { Toolbar, type ZoomMode } from './Toolbar';
 
-const FIT_MARGIN = 16;
+const FIT_MARGIN = 40;
 
 function ZoomBox({ width, height, zoom, children }: { width: number; height: number; zoom: number; children: ReactNode }) {
   return (
@@ -54,6 +56,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const onTestClick = useCallback((m: TestClickMessage) => setLastClick(m), []);
   const onTrack = useCallback((name: string) => setEvents((ev) => [...ev, name].slice(-6)), []);
   const assetUrls = useAssetUrls(project);
+  const panel = usePanelWidth();
   useDocumentFonts(project, assetUrls);
 
   const onUpload = useCallback((files: File[], target?: UploadTarget) => {
@@ -91,7 +94,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
   const fit = stage.width > 0 && stage.height > 0
     ? Math.max(0.1, Math.min(1, (stage.width - FIT_MARGIN) / size.width, (stage.height - FIT_MARGIN) / size.height))
     : 1;
-  const zoom = zoomMode === 'fit' ? fit : zoomMode;
+  const zoom = zoomMode === 'fit' ? Math.floor(fit * 50) / 50 : zoomMode;
 
   const selected = selection
     .map((id) => findElement(size.elements, id))
@@ -129,7 +132,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
     <div className="editor">
       <EditorHeader project={project} saveStatus={saveStatus} mode={mode} onModeChange={changeMode} onExit={onExit} onExport={() => setExporting(true)} />
       {exporting && <ExportDialog project={project} assetUrls={assetUrls} onClose={() => setExporting(false)} />}
-      <main className="workspace">
+      <main className="workspace" style={{ '--rp': `${panel.width}px` } as CSSProperties}>
         <aside className="panel">
           <SizesPanel project={project} activeSizeId={size.id} />
           <LayersPanel size={size} />
@@ -153,6 +156,7 @@ export function EditorView({ onExit }: { onExit: () => void }) {
           <section
             ref={stageRef}
             className="stage"
+            data-fit={zoomMode === 'fit'}
             onPointerDown={(e) => { if (mode === 'edit' && e.target === e.currentTarget) select([]); }}
             onDragOver={onDragOver}
             onDrop={onDrop}
@@ -212,7 +216,10 @@ export function EditorView({ onExit }: { onExit: () => void }) {
           <Timeline size={size} mode={mode} onSeek={onSeek} />
         </div>
 
+        <div className="rp-handle" role="separator" aria-orientation="vertical" aria-label="Resize the properties panel"
+          title="Drag to resize · double-click to reset" onPointerDown={panel.start} onDoubleClick={panel.reset} />
         <aside className="panel panel-right">
+          <PanelBar />
           <PropertiesPanel size={size} selected={selected} onUpload={onUpload} />
         </aside>
       </main>

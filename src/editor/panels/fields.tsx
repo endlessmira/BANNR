@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef, useState } from 'react';
+import { type ReactNode, useEffect, useRef, useState, useLayoutEffect, useSyncExternalStore } from 'react';
 import type { Paint } from '@/model/types';
 import { safeColor } from '@/renderer/css';
 import { formatColor, parseColor, toHex } from '@/model/color';
@@ -7,11 +7,71 @@ import { ACCEPT_IMAGES } from '../assets';
 export type Opt<T extends string> = ReadonlyArray<readonly [T, string]>;
 const fmt = (n: number): string => String(Math.round(n * 100) / 100);
 
+/* Collapsible sections and the settings search. Shared by every Section; closed sections are remembered by title. */
+const SECTIONS_KEY = 'bannr:closedSections';
+const hasStorage = (): boolean => typeof localStorage !== 'undefined';
+const closedSections: Set<string> = (() => {
+  try {
+    const v: unknown = hasStorage() ? JSON.parse(localStorage.getItem(SECTIONS_KEY) ?? '[]') : [];
+    return new Set<string>(Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+  } catch {
+    return new Set<string>();
+  }
+})();
+let sectionQuery = '';
+const sectionSubs = new Set<() => void>();
+function sectionsChanged(): void {
+  if (hasStorage()) {
+    try { localStorage.setItem(SECTIONS_KEY, JSON.stringify([...closedSections])); } catch { /* storage blocked */ }
+  }
+  sectionSubs.forEach((f) => f());
+}
+const subscribeSections = (f: () => void): (() => void) => {
+  sectionSubs.add(f);
+  return () => { sectionSubs.delete(f); };
+};
+export function expandAllSections(): void { closedSections.clear(); sectionsChanged(); }
+export function collapseSections(titles: readonly string[]): void {
+  for (const t of titles) if (t) closedSections.add(t);
+  sectionsChanged();
+}
+export function setSectionQuery(q: string): void { sectionQuery = q.trim().toLowerCase(); sectionsChanged(); }
+
 export function Section({ title, children }: { title: string; children: ReactNode }) {
+  const open = useSyncExternalStore(subscribeSections, () => !closedSections.has(title));
+  const q = useSyncExternalStore(subscribeSections, () => sectionQuery);
+  const ref = useRef<HTMLElement>(null);
+  const show = open || q !== '';
+  // While searching: show only the settings (and sections) that match.
+  useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root) return;
+    const titleHit = q === '' || title.toLowerCase().includes(q);
+    let any = titleHit;
+    const body = root.querySelector(':scope > .psec-body');
+    const kids: Element[] = body ? Array.from(body.children) : [];
+    for (const c of kids) {
+      const labels = Array.from(c.querySelectorAll('[aria-label]')).map((e) => e.getAttribute('aria-label') ?? '').join(' ');
+      const hit = titleHit || `${c.textContent ?? ''} ${labels}`.toLowerCase().includes(q);
+      (c as HTMLElement).hidden = !hit;
+      if (hit) any = true;
+    }
+    root.hidden = !any;
+  });
+  const toggle = () => {
+    if (open) closedSections.add(title);
+    else closedSections.delete(title);
+    sectionsChanged();
+  };
   return (
-    <section className="psec">
-      <h3>{title}</h3>
-      {children}
+    <section ref={ref} className="psec" data-title={title}>
+      <h3>
+        <button type="button" className="psec-toggle" aria-expanded={show} onClick={toggle}>
+          <span className="psec-caret" aria-hidden="true">▾</span>
+          {title}
+        </button>
+      </h3>
+      {show ? <div className="psec-body">{children}</div> : null}
     </section>
   );
 }

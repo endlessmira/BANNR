@@ -197,11 +197,42 @@ function Typography({ id, t, isText }: { id: ID; t: TextStyle; isText: boolean }
   );
 }
 
+/** Makes an image layer the size of the banner, with the given fit (one undo step). */
+function placeImage(id: ID, fit: ImageElement['fit']): void {
+  const { activeSizeId, update } = useEditorStore.getState();
+  if (!activeSizeId) return;
+  update((d) => mutateSize(d, activeSizeId, (s) => {
+    const e = s.elements.find((x) => x.id === id);
+    if (!e || e.type !== 'image') return;
+    e.x = 0; e.y = 0; e.width = s.width; e.height = s.height; e.rotation = 0; e.fit = fit;
+  }));
+}
+
+/** Gives an image layer the image's own proportions again, keeping its width and centre. */
+function resetProportions(id: ID): void {
+  const { activeSizeId, update } = useEditorStore.getState();
+  if (!activeSizeId) return;
+  update((d) => mutateSize(d, activeSizeId, (s) => {
+    const e = s.elements.find((x) => x.id === id);
+    const a = e && e.type === 'image' ? d.assets[e.assetId] : undefined;
+    if (!e || !a || !a.width || !a.height) return;
+    const h = Math.round((e.width * a.height) / a.width);
+    e.y = Math.round(e.y + (e.height - h) / 2);
+    e.height = h;
+  }));
+}
+
 function ImageSection({ el, onUpload }: { el: ImageElement; onUpload: OnUpload }) {
   const id = el.id;
   return (
     <Section title="Image">
       <SelectField label="Fit" value={el.fit} options={FITS} onChange={(v) => editEl(id, 'fit', (e) => { if (e.type === 'image') e.fit = v; })} />
+      <p className="muted small">Fit only changes something when the box has a different shape than the image. Use the buttons below, or resize the box.</p>
+      <div className="btn-row">
+        <button type="button" className="secondary small-btn" onClick={() => placeImage(id, 'cover')}>Fill banner</button>
+        <button type="button" className="secondary small-btn" onClick={() => placeImage(id, 'contain')}>Fit inside banner</button>
+        <button type="button" className="secondary small-btn" onClick={() => resetProportions(id)}>Original proportions</button>
+      </div>
       <label className="sf">
         <span>Alt</span>
         <input

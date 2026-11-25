@@ -1,0 +1,33 @@
+/* Wider, resizable, collapsible properties panel */
+.editor .workspace { position: relative; grid-template-columns: 240px minmax(0, 1fr) var(--rp, 300px); }
+.rp-handle { position: absolute; top: 0; bottom: 0; right: var(--rp, 300px); width: 8px; margin-right: -4px; z-index: 30; cursor: col-resize; }
+.rp-handle:hover, body.rp-resizing .rp-handle { background: rgba(242,169,2,.35); }
+body.rp-resizing { cursor: col-resize; user-select: none; }
+body.rp-resizing iframe { pointer-events: none; }
+
+.rp-bar { position: sticky; top: -16px; z-index: 10; display: flex; gap: 6px; align-items: center;
+  margin: -16px -16px 10px; padding: 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line); }
+.rp-search { flex: 1; min-width: 0; border-color: var(--line); }
+.rp-search:focus { border-color: var(--amber); outline: none; }
+
+.psec h3 { margin: 0; }
+.psec-toggle { display: flex; align-items: center; gap: 6px; width: 100%; padding: 0; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); text-align: left; }
+.psec-toggle:hover { color: var(--text); }
+.psec-caret { display: inline-block; transition: transform .15s; }
+.psec-toggle[aria-expanded="false"] .psec-caret { transform: rotate(-90deg); }
+.psec[hidden], .psec [hidden] { display: none !important; }
+
+/* Two columns when there is room; long settings use the full width */
+.psec-body, .grp-body, .grp-item-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px 18px; align-items: start; }
+.psec-body > :is(.grid2, .paint, .anim-step, .grp, .slot, p, .btn-row, .fit-notice, .notice, .anim-warn, .asset-row, .ta, details, button),
+.psec-body > .sf:has(textarea),
+.grp-body > :is(.grp-actions, .grp, .slot, p), .grp-body > .sf:has(textarea),
+.grp-item-body > :is(.grp-actions, .grp, .slot, p), .grp-item-body > .sf:has(textarea) { grid-column: 1 / -1; }
+.psec-body > button { justify-self: start; }
+.panel-right .nf > span, .panel-right .sf > span, .panel-right .cf > span { min-width: 92px; }
+.panel-right .grid2 { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+.panel-right .grid2 .nf > span { min-width: 44px; }
+
+/* The toolbar wraps instead of being cut off when the canvas is narrow */
+.toolbar { flex-wrap: wrap; justify-content: center; max-width: calc(100% - 24px); white-space: normal; }

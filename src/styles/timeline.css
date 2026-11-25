@@ -29,3 +29,9 @@
 .tl-bar[data-over="true"] { background: #ff8a8d; }
 .tl-bar[data-static="true"] { cursor: pointer; }
 .tl-playhead { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: #ff3ea5; pointer-events: none; z-index: 3; }
+
+/* Stable layout: no feedback loop between scrollbars, timeline height and Fit zoom */
+.tl-body { height: 150px; max-height: none; overflow-x: hidden; overflow-y: auto; scrollbar-gutter: stable; }
+.tl-right { overflow-x: clip; }
+.tl-tick:last-child { transform: translateX(-100%); }
+.editor .stage[data-fit="true"] { overflow: hidden; }
