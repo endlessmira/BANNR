@@ -6,3 +6,11 @@ playwright-report
 .DS_Store
 *.log
 setup-*.sh
+filelist.txt
+
+node_modules/
+test-results/
+playwright-report/
+dist/
+bundle.txt
+filelist.txt
