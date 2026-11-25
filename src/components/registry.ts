@@ -8,19 +8,22 @@ import { counter } from './counter';
 import { cube } from './cube';
 import { flip } from './flip';
 import { gradient_ } from './gradient';
+import { hoverreveal } from './hoverreveal';
 import { leadform } from './leadform';
 import { orbit } from './orbit';
 import { panorama } from './panorama';
+import { peel } from './peel';
 import { scratch } from './scratch';
 import { tilt } from './tilt';
 import { wipe } from './wipe';
+import { zoom } from './zoom';
 import type { ComponentDefinition } from './types';
 
 /** Every component, keyed by type. Adding a component = adding its folder and one line here. */
 export const COMPONENTS: Readonly<Record<string, ComponentDefinition>> = Object.fromEntries(
   [
     cascade, gradient_, cube, flip, tilt, orbit, carousel, carouselset, cardswipe, panorama,
-    scratch, wipe, counter, countdown, clock, leadform,
+    scratch, peel, wipe, hoverreveal, zoom, counter, countdown, clock, leadform,
   ].map((d) => [d.type, d]),
 );
 
